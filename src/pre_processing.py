@@ -7,9 +7,9 @@ import pylab as pl
 import xarray as xr
 
 
-PATH_MESH = "./data/fesom.mesh.diag.nc"
-PATHS_SSH = ["./data/ssh.fesom.2010.nc"]
-#PATH_PILOT_SSH = "./data/pilot/raw/pilot_ssh.nc"
+PATH_MESH = "../data/fesom.mesh.diag.nc"
+PATHS_SSH = ["../data/ssh.fesom.2010.nc"]
+#PATH_PILOT_SSH = "../data/pilot/raw/pilot_ssh.nc"
 DEBUG_PLOT = True
 DEBUG_DATA = True
 
