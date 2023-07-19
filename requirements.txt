@@ -1,6 +1,7 @@
 matplotlib
 netcdf4
 numpy
+sklearn
 torch
 torch-scatter
 torch-sparse
