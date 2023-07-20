@@ -8,8 +8,7 @@ import xarray as xr
 class PilotDataset(Dataset):
 
     # root: Where the dataset should be stored and divided into processed/ and raw/
-    def __init__(self, root, label_type, transform=None, pre_transform=None, pre_filter=None):
-        self.label_type = label_type # TODO remove this
+    def __init__(self, root, transform=None, pre_transform=None, pre_filter=None):
         super().__init__(root, transform, pre_transform, pre_filter)
 
     @property
