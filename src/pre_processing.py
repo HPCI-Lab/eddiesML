@@ -7,11 +7,19 @@ import pylab as pl
 import xarray as xr
 
 
-PATH_MESH = "../data/fesom.mesh.diag.nc"
-PATHS_SSH = ["../data/ssh.fesom.2010.nc"]
+### GLOBAL VARIABLES ###
+
+PATH_DATA = '../data'
+PATH_MESH = PATH_DATA + '/fesom.mesh.diag.nc'
+PATHS_SSH = PATH_DATA + '/ssh.fesom.2010.nc'
 #PATH_PILOT_SSH = "../data/pilot/raw/pilot_ssh.nc"
-DEBUG_PLOT = True
-DEBUG_DATA = True
+DEBUG_PLOT = False
+DEBUG_DATA = False
+
+LEFT = -70
+RIGHT = 30
+BOTTOM = -60
+TOP = -20
 
 # TODO: for every path in SSH, read the file and (delete the useless field)
 # concatenate them, or read them with open_mfdataset()
@@ -48,11 +56,7 @@ if DEBUG_DATA:
 
 # %%
 # RoI & Plot: South Atlantic mask extraction (Eddy rich region)
-left = 0
-right = 1
-bottom = -41
-top = -40
-region_mask = (model_lon > left) & (model_lon < right) & (model_lat < top) & (model_lat > bottom)
+region_mask = (model_lon > LEFT) & (model_lon < RIGHT) & (model_lat < TOP) & (model_lat > BOTTOM)
 
 if DEBUG_PLOT:
     step = 1000
@@ -61,7 +65,7 @@ if DEBUG_PLOT:
 
 # %%
 # RoI: edges extraction
-# Decrease by 1 since for compatibility with Fortran thhttps://github.com/massimilianofronza/unstructuredEarthe indexes start from 1 instead of 0
+# Decrease by 1 since for compatibility with Fortran the indexes start from 1 instead of 0
 edge_0 = data_mesh.edges[0].values
 edge_1 = data_mesh.edges[1].values
 edge_0 -= 1
@@ -104,33 +108,36 @@ if DEBUG_PLOT:
 
 # %%
 # Plot: just the connections of the RoI
-edge_0 = data_mesh.edges[:, 0].values
-edge_1 = data_mesh.edges[:, 1].values
-x_0 = []
-y_0 = []
-x_1 = []
-y_1 = []
-for i in range(edge_0.size):
-    if region_mask[edge_0[i]] & region_mask[edge_1[i]]:
-        # First the connection starting points
-        x_0.append(float(model_lon[edge_0[i]]))
-        y_0.append(float(model_lat[edge_0[i]]))
-        # Then the connection end points
-        x_1.append(float(model_lon[edge_1[i]]))
-        y_1.append(float(model_lat[edge_1[i]]))
+if DEBUG_PLOT:
+    edge_0 = data_mesh.edges[:, 0].values
+    edge_1 = data_mesh.edges[:, 1].values
+    x_0 = []
+    y_0 = []
+    x_1 = []
+    y_1 = []
+    for i in range(edge_0.size):
+        if region_mask[edge_0[i]] & region_mask[edge_1[i]]:
+            # First the connection starting points
+            x_0.append(float(model_lon[edge_0[i]]))
+            y_0.append(float(model_lat[edge_0[i]]))
+            # Then the connection end points
+            x_1.append(float(model_lon[edge_1[i]]))
+            y_1.append(float(model_lat[edge_1[i]]))
 
-# Organizing the start and ending connection points for visualization
-lines = []
-for i in range(len(x_0)):
-    lines.append([(x_0[i], y_0[i]), (x_1[i], y_1[i])])
+    # Organizing the start and ending connection points for visualization
+    lines = []
+    for i in range(len(x_0)):
+        lines.append([(x_0[i], y_0[i]), (x_1[i], y_1[i])])
 
-# Color mask to green
-c = [(0, 1, 0, 1)]*len(x_0)
+    # Color mask to green
+    c = [(0, 1, 0, 1)]*len(x_0)
 
-lc = mc.LineCollection(lines, colors=c, linewidths=1)
-fig, ax = pl.subplots()
-ax.add_collection(lc)
-ax.margins(0.1)
-plt.show()
+    lc = mc.LineCollection(lines, colors=c, linewidths=1)
+    fig, ax = pl.subplots()
+    ax.add_collection(lc)
+    ax.margins(0.1)
+    plt.show()
 
 # %%
+# 
+data_mesh.to_netcdf(PATH_DATA + '/mesh_subset.nc', engine='netcdf4')

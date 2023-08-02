@@ -2,8 +2,6 @@
 # Imports + Global settings
 import matplotlib.pyplot as plt
 import numpy as np
-import os
-from sklearn.preprocessing import MinMaxScaler
 import torch
 import torch_geometric
 from torch_geometric.loader import DataLoader
