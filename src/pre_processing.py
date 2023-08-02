@@ -1,12 +1,12 @@
 # %%
 # Imports + Global variables
-import yaml
 import matplotlib.pyplot as plt
 from matplotlib import collections as mc
 import numpy as np
 import pylab as pl
 import sys
 import xarray as xr
+import yaml
 
 
 ### GLOBAL VARIABLES ###
