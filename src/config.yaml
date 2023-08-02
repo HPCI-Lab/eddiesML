@@ -1,5 +1,5 @@
-debug_plot: True
-debug_data: True
+debug_plot: False
+debug_data: False
 
 year: 2015
 
