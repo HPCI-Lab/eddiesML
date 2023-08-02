@@ -1,32 +1,38 @@
 # %%
 # Imports + Global variables
+import yaml
 import matplotlib.pyplot as plt
 from matplotlib import collections as mc
 import numpy as np
 import pylab as pl
+import sys
 import xarray as xr
 
 
 ### GLOBAL VARIABLES ###
 
-PATH_DATA = '../data'
-PATH_MESH = PATH_DATA + '/fesom.mesh.diag.nc'
-PATHS_SSH = PATH_DATA + '/ssh.fesom.2010.nc'
-#PATH_PILOT_SSH = "../data/pilot/raw/pilot_ssh.nc"
-DEBUG_PLOT = False
-DEBUG_DATA = False
+yaml_file = sys.argv[1]
+params = yaml.safe_load(open(yaml_file))
 
-LEFT = -70
-RIGHT = 30
-BOTTOM = -60
-TOP = -20
+INPUT_PATH_GRID = params['input_path_grid_nc']
+INPUT_PATH_SSH = params['input_path_data_nc']
+#PATH_PILOT_SSH = "../data/pilot/raw/pilot_ssh.nc"
+DEBUG_PLOT = params['debug_plot']
+DEBUG_DATA = params['debug_data']
+
+LEFT = params['input_left']
+RIGHT = params['input_right']
+BOTTOM = params['input_bottom']
+TOP = params['input_top']
+
+OUTPUT_PATH_GRID_SUBSET = params['output_path_grid_subset']
 
 # TODO: for every path in SSH, read the file and (delete the useless field)
 # concatenate them, or read them with open_mfdataset()
 
 # %%
 # Read and print the mesh
-data_mesh = xr.open_dataset(PATH_MESH, engine='netcdf4')
+data_mesh = xr.open_dataset(INPUT_PATH_GRID, engine='netcdf4')
 if DEBUG_DATA:
     print(data_mesh)
 
@@ -140,4 +146,6 @@ if DEBUG_PLOT:
 
 # %%
 # 
-data_mesh.to_netcdf(PATH_DATA + '/mesh_subset.nc', engine='netcdf4')
+data_mesh.to_netcdf(OUTPUT_PATH_GRID_SUBSET, engine='netcdf4')
+
+# %%
