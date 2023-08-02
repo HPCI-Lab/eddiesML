@@ -124,17 +124,12 @@ lines = []
 for i in range(len(x_0)):
     lines.append([(x_0[i], y_0[i]), (x_1[i], y_1[i])])
 
-# Color mask to highlight the last line
-c = [(0, 1, 0, 1)]*(len(x_0)-1)
-#c.append((1, 0, 0, 1))
-c.append((0, 1, 0, 1))
+# Color mask to green
+c = [(0, 1, 0, 1)]*len(x_0)
 
 lc = mc.LineCollection(lines, colors=c, linewidths=1)
 fig, ax = pl.subplots()
 ax.add_collection(lc)
-#for i in range(len(x_0)):
-#    plt.annotate(f"start_{i}", (x_0[i], y_0[i]))
-#    plt.annotate(f"end_{i}", (x_1[i], y_1[i]))
 ax.margins(0.1)
 plt.show()
 
