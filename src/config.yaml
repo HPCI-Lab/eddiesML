@@ -12,4 +12,5 @@ input_right: 30
 input_top: -20
 input_bottom: -60
 
+output_path_grid_subset: "/work/ab0995/b382485/eddy_data/mesh_subset.nc"
 output_subset_pre_processed: "/work/ab0995/b382485/eddy_data/subset_pre_processed"
