@@ -1,9 +1,5 @@
-debug_plot: False
-debug_data: False
-
 year: 2015
 
-input_path_data_filtered: "/work/ab0995/b382485/eddy_data/output_path/months"
 input_path_data_seg_masks: "/work/ab0995/b382485/eddy_data/segmentation_masks"
 input_grid_nc: "/work/ab0995/a270088/meshes/FORCA12/fesom.mesh.diag.nc"
 
@@ -12,5 +8,5 @@ input_right: 30
 input_top: -20
 input_bottom: -60
 
-output_path_grid_subset: "/work/ab0995/b382485/eddy_data/mesh_subset.nc"
-output_subset_pre_processed: "/work/ab0995/b382485/eddy_data/subset_pre_processed"
+output_subset_mesh: "/work/ab0995/b382485/eddy_data/mesh_subset.nc"
+output_subset_pre_processed_data: "/work/ab0995/b382485/eddy_data/subset_pre_processed"
