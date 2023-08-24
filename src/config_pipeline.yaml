@@ -1,0 +1,7 @@
+input_subset_pre_processed: "/work/ab0995/b382485/eddy_data/subset_pre_proc"
+input_subset_grid: "/work/ab0995/b382485/eddy_data/mesh_subset.nc"
+
+input_left: -70
+input_right: 30
+input_top: -20
+input_bottom: -60
