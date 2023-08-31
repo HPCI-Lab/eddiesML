@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import torch
+import torch_geometric.utils as tg_utils
 from torch_geometric.data import Data
 from torch_geometric.data import Dataset
 import xarray as xr
@@ -34,7 +35,6 @@ class PilotDataset(Dataset):
         edge_index = self._get_adjacency_info()
         
         node_feats = None
-        edge_index = None
         labels = None
         
         for raw_path in self.raw_paths:
@@ -80,11 +80,13 @@ class PilotDataset(Dataset):
         all_nodes_feats = np.asarray(all_nodes_feats)
         return torch.tensor(all_nodes_feats, dtype=torch.float)
 
-    # TODO it should be undirected, see utils.to_undirected() to make it undirected
-    # Return the graph connetivity in COO format with shape=[2, num_edges]
-    def _get_adjacency_info(self):        
+    # Return the graph edges in COO format with shape=[2, num_edges]
+    def _get_adjacency_info(self):
         mesh = xr.open_dataset(self.mesh_path)
-        return torch.tensor(mesh.edges.values.T, dtype=torch.long)
+        edges_coo = mesh.edges.values.T
+        edges_coo = torch.tensor(edges_coo, dtype=torch.long)
+        edges_coo = tg_utils.to_undirected(edges_coo)
+        return edges_coo
 
     # Download the raw data into raw/, or the folder specified in self.raw_dir
     def download(self):
