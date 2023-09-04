@@ -48,20 +48,18 @@ class PilotDataset(Dataset):
             raw_data = xr.open_dataset(raw_path)
 
             # Get node features
-            #node_feats = self._get_node_features(raw_data)
+            node_feats = self._get_node_features(raw_data)
             
             # Get labels info
-            #labels = self._get_labels(raw_data)
+            labels = self._get_labels(raw_data)
 
             # Create the Data object
             data = Data(
-                #x=node_feats,                       # node features
+                x=node_feats,                       # node features
                 edge_index=edge_index,              # edge connectivity
-                #y=labels,                           # labels for classification
+                y=labels,                           # labels for classification
             )
 
-            #print(os.path.join(self.processed_dir, f'year_{year}_cyclone_{cyclone}.pt'))
-            # TODO customize this to fit the type of eddy information we're going to store
             torch.save(data, os.path.join(self.processed_dir, f'year_{year}_month_{month}_day_{day}.pt'))
 
         print("    Shape of node feature matrix:", np.shape(node_feats))
@@ -69,25 +67,25 @@ class PilotDataset(Dataset):
         print("    Shape of labels:", np.shape(labels))
 
 
-    # Return a matrix with shape=[num_nodes, num_node_features]
-    # Features here are the SSH information
+    # Return the SSH information with shape=[num_nodes, num_node_features]
     def _get_node_features(self, data):
-
-        all_nodes_feats =[]
-
-        # TODO for every node, append its SSH information to the above list
-
+        all_nodes_feats = data.ssh.values
         all_nodes_feats = np.asarray(all_nodes_feats)
         return torch.tensor(all_nodes_feats, dtype=torch.float)
 
     # Return the graph edges in COO format with shape=[2, num_edges]
+    # TODO I created a edges_local variable that restricts the node indexes between [0, num_nodes], so now we should be fine
     def _get_adjacency_info(self):
         mesh = xr.open_dataset(self.mesh_path)
-        edges_coo = mesh.edges.values.T
-        edges_coo = torch.tensor(edges_coo, dtype=torch.long)
+        edges_coo = torch.tensor(mesh.edges_local.values, dtype=torch.long)
         edges_coo = tg_utils.to_undirected(edges_coo)
         return edges_coo
-
+    
+    # Return the segmentation mask in the form of labels for graph nodes
+    def _get_labels(self, data):
+        labels = data.seg_mask.values
+        return torch.tensor(labels, dtype=torch.float)
+    
     # Download the raw data into raw/, or the folder specified in self.raw_dir
     def download(self):
         pass
@@ -96,7 +94,7 @@ class PilotDataset(Dataset):
     def len(self):
         return len(self.processed_file_names)
     
-    # Implements the logic to load a single graph - TODO we'll have to redefine this
+    # Implements the logic to load a single graph
     def get(self, year, month, day):
         data = torch.load(os.path.join(self.processed_dir, f'year_{year}_month_{month}_day_{day}.pt'))
         return data

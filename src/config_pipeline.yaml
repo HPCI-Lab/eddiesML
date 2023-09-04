@@ -1,5 +1,5 @@
 input_subset_pre_processed: "/work/ab0995/b382485/eddy_data/subset_pre_proc"
-input_subset_grid: "/work/ab0995/b382485/eddy_data/subset_pre_proc/mesh_subset.nc"
+input_subset_grid: "/work/ab0995/b382485/eddy_data/subset_pre_proc/subset_mesh.nc"
 
 hid_channels: 32
 n_classes: 1
