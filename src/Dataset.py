@@ -93,8 +93,8 @@ class PilotDataset(Dataset):
     # Returns the number of examples in the dataset
     def len(self):
         return len(self.processed_file_names)
-    
-    # Implements the logic to load a single graph
+
+    # Implements the logic to load a single graph - TODO retrieve everything if some parameter is missing
     def get(self, year, month, day):
         data = torch.load(os.path.join(self.processed_dir, f'year_{year}_month_{month}_day_{day}.pt'))
         return data

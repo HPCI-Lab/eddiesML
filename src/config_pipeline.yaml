@@ -3,7 +3,12 @@ input_subset_grid: "/work/ab0995/b382485/eddy_data/subset_pre_proc/subset_mesh.n
 
 hid_channels: 32
 n_classes: 1
-train_batch_size: 512
-test_batch_size: 512
-valid_batch_size: 512
+
+train_prop: 0.7
+val_prop: 0.15
+test_prop: 0.15
+train_batch_size: 64
+val_batch_size: 64
+test_batch_size: 64
+
 final_act: "sigmoid" # "linear"
