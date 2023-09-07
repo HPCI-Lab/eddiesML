@@ -69,8 +69,11 @@ class PilotDataset(Dataset):
 
     # Return the SSH information with shape=[num_nodes, num_node_features]
     def _get_node_features(self, data):
-        all_nodes_feats = data.ssh.values
+        all_nodes_feats = []
+        nodes_feats = data.ssh.values
+        all_nodes_feats.append(nodes_feats)
         all_nodes_feats = np.asarray(all_nodes_feats)
+        all_nodes_feats = all_nodes_feats.T
         return torch.tensor(all_nodes_feats, dtype=torch.float)
 
     # Return the graph edges in COO format with shape=[2, num_edges]
