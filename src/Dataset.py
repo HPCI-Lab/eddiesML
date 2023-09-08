@@ -1,3 +1,4 @@
+import glob
 import numpy as np
 import os
 import torch
@@ -99,5 +100,20 @@ class PilotDataset(Dataset):
 
     # Implements the logic to load a single graph - TODO retrieve everything if some parameter is missing
     def get(self, year, month, day):
-        data = torch.load(os.path.join(self.processed_dir, f'year_{year}_month_{month}_day_{day}.pt'))
+        data = torch.load(os.path.join(self.processed_dir, f"year_{year}_month_{month}_day_{day}.pt"))
         return data
+
+    # Gets all files per year, month, and/or day
+    def get_all(self, year=None, month=None, day=None):
+        if year == None:
+            year = '*'
+        if month == None:
+            month = '*'
+        if day == None:
+            day = '*'
+        file_names = os.path.join(self.processed_dir, f"year_{year}_month_{month}_day_{day}.pt")
+        
+        files = []
+        for file in glob.glob(file_names):
+            files.append(torch.load(file))
+        return files

@@ -1,9 +1,9 @@
 input_subset_pre_processed: "/work/ab0995/b382485/eddy_data/subset_pre_proc"
 input_subset_grid: "/work/ab0995/b382485/eddy_data/subset_pre_proc/subset_mesh.nc"
 
-train_prop: 0.7
-val_prop: 0.15
-test_prop: 0.15
+train_prop: 70
+val_prop: 20
+test_prop: 10
 
 train_batch_size: 64
 val_batch_size: 64
@@ -14,6 +14,9 @@ hid_channels: 32
 n_classes: 1
 
 final_act: "sigmoid" # "linear"
+loss_op: "BCE"
+optimizer: "Adam"
+learn_rate: 0.005
 
 plot_show: True
 plot_vertical: True
