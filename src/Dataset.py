@@ -7,13 +7,36 @@ from torch_geometric.data import Data
 from torch_geometric.data import Dataset
 import xarray as xr
 
-class PilotDataset(Dataset):
-
+class EddyDataset(Dataset):
     # root: Where the dataset should be stored and divided into processed/ and raw/
-    def __init__(self, root, mesh_path, transform=None, pre_transform=None, pre_filter=None):
+    def __init__(self, root, mesh_path, split, transform=None, pre_transform=None, pre_filter=None):
+        
         self.mesh_path = mesh_path
+        self.split = split
+        
+        # Call of process() within
         super().__init__(root, transform, pre_transform, pre_filter)
-
+        
+        # These are useless(TODO for now?)
+        graph_names = self.processed_file_names
+        if 'pre_filter.pt' in graph_names:
+            os.remove(self.processed_dir+'/pre_filter.pt')
+        if 'pre_transform.pt' in graph_names:
+            os.remove(self.processed_dir+'/pre_transform.pt')
+        
+        TRAIN_PROP, VAL_PROP, TEST_PROP = 70, 20, 10
+        total_n_files = len(self.processed_file_names)
+        self.n_train = round(total_n_files*TRAIN_PROP/100)
+        self.n_val = round(total_n_files*VAL_PROP/100)
+        self.n_test = total_n_files-self.n_train-self.n_val
+        print('train: ', self.n_train, ' val: ', self.n_val, ' test: ', self.n_test)
+        
+        # We just need to do this once - TODO fix this, it only shuffles the train
+        if split == 'train':
+            #self = self.shuffle()
+            print(self.shuffle(return_perm=True))
+            print('shuffle x1')
+    
     @property
     # If you directly return the names of the files, the '.' will be in /data/bsc/raw/
     # If you return os.listdir, the '.' will be where "Dataset.py" is
@@ -21,14 +44,10 @@ class PilotDataset(Dataset):
         return os.listdir(self.root + '/raw')
 
     @property
-    # Return a list of graph files in the processed/ folder.
-    # If these files:
-    #   don't exist: process() will start and create them
-    #   exist: process() will be skipped
     def processed_file_names(self):
         return os.listdir(self.root + '/processed')
     
-    # Read the raw data and convert it into graph representations that are going to be saved into the processed/ folder.
+    # Converts files in /raw into graphs in processed/
     # This function is triggered as soon as the PilotDataset is instantiated
     def process(self):
         
@@ -96,15 +115,34 @@ class PilotDataset(Dataset):
 
     # Returns the number of examples in the dataset
     def len(self):
-        return len(self.processed_file_names)
+        res = -1
+        if self.split == 'train':
+            res = self.n_train
+        elif self.split == 'val':
+            res = self.n_val
+        elif self.split == 'test':
+            res = self.n_test
+        return res
 
-    # Implements the logic to load a single graph - TODO retrieve everything if some parameter is missing
-    def get(self, year, month, day):
-        data = torch.load(os.path.join(self.processed_dir, f"year_{year}_month_{month}_day_{day}.pt"))
+    # Implements the logic to load a single graph
+    def get(self, idx):
+        data = None
+        files = []
+        
+        if self.split == 'train':
+            files = self.processed_file_names[:self.n_train]
+        elif self.split == 'val':
+            files = self.processed_file_names[self.n_train:(self.n_train+self.n_val)]
+        elif self.split == 'test':
+            files = self.processed_file_names[(self.n_train+self.n_val):]
+        
+        print(f"Get({self.split}): {files[idx]}")
+        data = files[idx]
+        data = torch.load(os.path.join(self.processed_dir, data))
         return data
 
-    # Gets all files per year, month, and/or day
-    def get_all(self, year=None, month=None, day=None):
+    # Gets files per year, month, and/or day
+    def get_by_time(self, year=None, month=None, day=None):
         if year == None:
             year = '*'
         if month == None:

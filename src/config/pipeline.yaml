@@ -5,9 +5,9 @@ train_prop: 70
 val_prop: 20
 test_prop: 10
 
-train_batch_size: 64
-val_batch_size: 64
-test_batch_size: 64
+train_batch_size: 2
+val_batch_size: 2
+test_batch_size: 2
 
 n_features: 1
 hid_channels: 32
