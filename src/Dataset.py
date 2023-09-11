@@ -34,8 +34,10 @@ class EddyDataset(Dataset):
         # We just need to do this once - TODO fix this, it only shuffles the train
         if split == 'train':
             #self = self.shuffle()
-            print(self.shuffle(return_perm=True))
-            print('shuffle x1')
+            #print(self.shuffle(return_perm=True))
+            print("    Shape of node feature matrix:", np.shape(self[0].x))
+            print("    Shape of graph connectivity in COO format:", np.shape(self[0].edge_index))
+            print("    Shape of labels:", np.shape(self[0].y))
     
     @property
     # If you directly return the names of the files, the '.' will be in /data/bsc/raw/
@@ -82,10 +84,6 @@ class EddyDataset(Dataset):
 
             torch.save(data, os.path.join(self.processed_dir, f'year_{year}_month_{month}_day_{day}.pt'))
 
-        print("    Shape of node feature matrix:", np.shape(node_feats))
-        print("    Shape of graph connectivity in COO format:", np.shape(edge_index))
-        print("    Shape of labels:", np.shape(labels))
-
 
     # Return the SSH information with shape=[num_nodes, num_node_features]
     def _get_node_features(self, data):
@@ -107,7 +105,7 @@ class EddyDataset(Dataset):
     # Return the segmentation mask in the form of labels for graph nodes
     def _get_labels(self, data):
         labels = data.seg_mask.values
-        return torch.tensor(labels, dtype=torch.float)
+        return torch.tensor(labels, dtype=torch.long)
     
     # Download the raw data into raw/, or the folder specified in self.raw_dir
     def download(self):
@@ -136,7 +134,7 @@ class EddyDataset(Dataset):
         elif self.split == 'test':
             files = self.processed_file_names[(self.n_train+self.n_val):]
         
-        print(f"Get({self.split}): {files[idx]}")
+        #print(f"Get({self.split}): {files[idx]}")
         data = files[idx]
         data = torch.load(os.path.join(self.processed_dir, data))
         return data

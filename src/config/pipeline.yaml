@@ -5,16 +5,16 @@ train_prop: 70
 val_prop: 20
 test_prop: 10
 
-train_batch_size: 2
-val_batch_size: 2
-test_batch_size: 2
+train_batch_size: 8
+val_batch_size: 16
+test_batch_size: 16
 
 n_features: 1
 hid_channels: 32
-n_classes: 1
+n_classes: 3
 
 final_act: "sigmoid" # "linear"
-loss_op: "BCE"
+loss_op: "CE"
 optimizer: "Adam"
 learn_rate: 0.005
 
