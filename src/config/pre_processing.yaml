@@ -8,5 +8,6 @@ input_right: 30
 input_top: -20
 input_bottom: -60
 
-output_subset_mesh: "/work/ab0995/b382485/eddy_data/subset_pre_proc/subset_mesh.nc"
+output_mesh: "subset_mesh.nc"
+output_subset_pre_proc: "/work/ab0995/b382485/eddy_data/subset_pre_proc/"
 output_subset_pre_proc_raw: "/work/ab0995/b382485/eddy_data/subset_pre_proc/raw"
