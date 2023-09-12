@@ -26,10 +26,9 @@ class EddyDataset(Dataset):
         
         TRAIN_PROP, VAL_PROP, TEST_PROP = 70, 20, 10
         total_n_files = len(self.processed_file_names)
-        self.n_train = round(total_n_files*TRAIN_PROP/100)
-        self.n_val = round(total_n_files*VAL_PROP/100)
-        self.n_test = total_n_files-self.n_train-self.n_val
-        print('train: ', self.n_train, ' val: ', self.n_val, ' test: ', self.n_test)
+        self.n_train = 32#round(total_n_files*TRAIN_PROP/100)
+        self.n_val = 16#round(total_n_files*VAL_PROP/100)
+        self.n_test = 16#total_n_files-self.n_train-self.n_val
         
         # We just need to do this once - TODO fix this, it only shuffles the train
         if split == 'train':
@@ -132,7 +131,7 @@ class EddyDataset(Dataset):
         elif self.split == 'val':
             files = self.processed_file_names[self.n_train:(self.n_train+self.n_val)]
         elif self.split == 'test':
-            files = self.processed_file_names[(self.n_train+self.n_val):]
+            files = self.processed_file_names[(self.n_train+self.n_val):(self.n_train+self.n_val+self.n_test)]
         
         #print(f"Get({self.split}): {files[idx]}")
         data = files[idx]
