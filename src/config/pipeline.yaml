@@ -5,12 +5,12 @@ train_prop: 70
 val_prop: 20
 test_prop: 10
 
-train_batch_size: 32
+train_batch_size: 64
 val_batch_size: 32
 test_batch_size: 32
 
 n_features: 1
-hid_channels: 32
+hid_channels: 16
 n_classes: 3
 
 final_act: "sigmoid" # "linear"
