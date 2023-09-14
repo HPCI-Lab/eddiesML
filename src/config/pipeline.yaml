@@ -5,7 +5,7 @@ train_prop: 70
 val_prop: 20
 test_prop: 10
 
-train_batch_size: 64
+train_batch_size: 128
 val_batch_size: 32
 test_batch_size: 32
 

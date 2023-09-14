@@ -26,9 +26,9 @@ class EddyDataset(Dataset):
         
         TRAIN_PROP, VAL_PROP, TEST_PROP = 70, 20, 10
         total_n_files = len(self.processed_file_names)
-        self.n_train = 64#round(total_n_files*TRAIN_PROP/100)
+        self.n_train = 128#round(total_n_files*TRAIN_PROP/100)
         self.n_val = 1#round(total_n_files*VAL_PROP/100)
-        self.n_test = 1#total_n_files-self.n_train-self.n_val
+        self.n_test = 32#total_n_files-self.n_train-self.n_val
         
         # We just need to do this once - TODO fix this, it only shuffles the train
         if split == 'train':
