@@ -10,11 +10,7 @@ class GUNet(torch.nn.Module):
         super().__init__()
 
         self.act_middle = torch.nn.functional.relu
-        # activation = torch.nn.Linear(1, 1); activation(x)
-        # torch.sigmoid
-        # torch.nn.Sigmoid
-        # F.log_softmax(x, dim=1)     # original version
-        # torch.nn.Linear(1, 1)
+        # F.log_softmax(x, dim=1)
         self.act_final = final_act
 
 
@@ -32,9 +28,9 @@ class GUNet(torch.nn.Module):
         x = F.dropout(data.x, p=0.92, training=self.training)
         x = self.unet(x, edge_index)
 
-        return self.act_final(x)
+        return self.act_final(x, dim=1)   # dim=1 is for the Softmax
 
     def _log_network(self):
         middle = self.act_middle.__name__
-        final = self.act_final.__module__
+        final = self.act_final.__name__
         print(f"GUNet instantiated!\n\tMiddle act: {middle}\n\tFinal act: {final}")
