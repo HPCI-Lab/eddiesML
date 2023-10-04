@@ -1,11 +1,12 @@
 #!/bin/bash
-#SBATCH --job-name=pipeline       # Job name
-#SBATCH --partition=shared        # Partition name
+#SBATCH --job-name=pipe
 #SBATCH --output=pipeline.log
+
+#SBATCH --partition=shared        # Partition name
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=256
-#SBATCH --mem=100G                 # Amount of memory needed
-#SBATCH --time=00:05:00
+#SBATCH --cpus-per-task=32
+#SBATCH --mem=150G                 # Amount of memory needed
+#SBATCH --time=08:00:00
 #SBATCH --account=ab0995          # Charge resources on this project account
 
 #SBATCH --mail-type=end
