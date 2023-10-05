@@ -12,8 +12,7 @@ class GUNet(torch.nn.Module):
         self.act_middle = torch.nn.functional.relu
         # F.log_softmax(x, dim=1)
         self.act_final = final_act
-
-
+        
         pool_ratios = [2000 / num_nodes, 0.5]
         self.unet = GraphUNet(in_channels, hidden_channels, out_channels,
                               depth=3, pool_ratios=pool_ratios, act=self.act_middle)
@@ -28,7 +27,12 @@ class GUNet(torch.nn.Module):
         x = F.dropout(data.x, p=0.92, training=self.training)
         x = self.unet(x, edge_index)
 
-        return self.act_final(x, dim=1)   # dim=1 is for the Softmax
+        act = None
+        if self.act_final.__name__ == "softmax":
+            act = self.act_final(x, dim=1)
+        elif self.act_final.__name__ == "sigmoid":
+            act = self.act_final(x)
+        return act
 
     def _log_network(self):
         middle = self.act_middle.__name__
