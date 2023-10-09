@@ -1,26 +1,33 @@
 input_subset_pre_processed: "/work/ab0995/b382485/eddy_data/subset_pre_proc"
 input_subset_grid: "/work/ab0995/b382485/eddy_data/subset_pre_proc/subset_mesh.nc"
 
-train_prop: 70
-val_prop: 20
+train_prop: 80
+val_prop: 10
 test_prop: 10
 
-train_batch_size: 256
-val_batch_size: 32
-test_batch_size: 32
+train_batch_size: 292
+val_batch_size: 36
+test_batch_size: 37
 
 n_features: 1
-hid_channels: 8
+hid_channels: 32
 n_classes: 3
 
-final_act: "softmax" # "sigmoid", "linear"
+final_act: "softmax" # "sigmoid" "linear"
 loss_op: "WCE" # "CE"
+loss_weight_1: 0.0238
+loss_weight_2: 0.4734
+loss_weight_3: 0.5028
+
 optimizer: "Adam"
 learn_rate: 0.005
 
-# Decides whether to show the graphical results or to same them in a folder
+epochs: 70
+
+# True: shows the graphical results. False: saves them in a folder
 plot_show: False
 
+plot_number: 8
 plot_vertical: True
 
 output_images_path: "/work/ab0995/b382485/eddy_data/subset_pre_proc/image_results"

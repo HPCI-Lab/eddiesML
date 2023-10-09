@@ -55,7 +55,7 @@ LOSS_OP = None
 if params['loss_op'] == "CE":
     LOSS_OP = torch.nn.CrossEntropyLoss()
 elif params['loss_op'] == "WCE":
-    class_weights = [0.0238, 0.4734, 0.5028]
+    class_weights = [params['loss_weight_1'], params['loss_weight_2'], params['loss_weight_3']]
     LOSS_OP = Loss.WeightedCrossEntropyLoss(class_weights)
 
 OPTIMIZER = None
@@ -68,6 +68,7 @@ EPOCHS = params['epochs']
 
 PLOT_SHOW = params['plot_show']
 PLOT_FOLDER = params['output_images_path']
+PLOT_N = params['plot_number']
 
 # TODO use this
 PLOT_VERTICAL = params['plot_vertical']
@@ -112,9 +113,9 @@ if dummy_graph.is_directed():
     raise ValueError("Graph edges are directed!")
 
 
-train_loader = DataLoader(train_dataset, batch_size=TRAIN_BATCH_SIZE, shuffle=True)
-val_loader = DataLoader(val_dataset, batch_size=VAL_BATCH_SIZE, shuffle=False)
-test_loader = DataLoader(test_dataset, batch_size=TEST_BATCH_SIZE, shuffle=False)
+train_loader = DataLoader(train_dataset, batch_size=TRAIN_BATCH_SIZE, shuffle=True, num_workers=6, pin_memory=True)
+val_loader = DataLoader(val_dataset, batch_size=VAL_BATCH_SIZE, shuffle=False, num_workers=6, pin_memory=True)
+test_loader = DataLoader(test_dataset, batch_size=TEST_BATCH_SIZE, shuffle=False, num_workers=6, pin_memory=True)
 
 print(len(train_loader.dataset), len(val_loader.dataset), len(test_loader.dataset))
 
@@ -203,7 +204,7 @@ for epoch in range(EPOCHS):
     train_loss.append(t_loss)
     valid_loss.append(v_loss)
 
-time_func.stop_time(timestamp, "Training Complete!")
+time_func.stop_time(timestamp, "Training Complete!\n")
 
 metric = evaluate(test_loader)
 print(f'Metric for test: {metric:.4f}')
@@ -217,7 +218,7 @@ plt.legend(title="Loss type: " + str(LOSS_OP))
 if PLOT_SHOW:
     plt.show()
 else:
-    plt.savefig(PLOT_FOLDER+"/train_val_losses_7.png")
+    plt.savefig(PLOT_FOLDER+"/train_val_losses_" + str(PLOT_N) + ".png")
     plt.close()
 
 
@@ -251,7 +252,7 @@ im2 = axes[1].scatter(mesh_lon, mesh_lat, c=this_pred, s=1)
 if PLOT_SHOW:
     plt.show()
 else:
-    plt.savefig(PLOT_FOLDER+"/pred_vs_ground_7.png")
+    plt.savefig(PLOT_FOLDER+"/pred_vs_ground_" + str(PLOT_N) + ".png")
     plt.close()
 
 
