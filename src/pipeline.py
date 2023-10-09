@@ -33,6 +33,7 @@ MESH_PATH = params['input_subset_grid']
 TRAIN_PROP = params['train_prop']
 VAL_PROP = params['val_prop']
 TEST_PROP = params['test_prop']
+TRAIN_VAL_TEST = [TRAIN_PROP, VAL_PROP, TEST_PROP]
 
 TRAIN_BATCH_SIZE = params['train_batch_size']
 VAL_BATCH_SIZE = params['val_batch_size']
@@ -54,7 +55,7 @@ LOSS_OP = None
 if params['loss_op'] == "CE":
     LOSS_OP = torch.nn.CrossEntropyLoss()
 elif params['loss_op'] == "WCE":
-    class_weights = [10, 85, 85]
+    class_weights = [0.0238, 0.4734, 0.5028]
     LOSS_OP = Loss.WeightedCrossEntropyLoss(class_weights)
 
 OPTIMIZER = None
@@ -62,6 +63,8 @@ if params['optimizer'] == "Adam":
     OPTIMIZER = torch.optim.Adam
 
 LEARN_RATE = params['learn_rate']
+
+EPOCHS = params['epochs']
 
 PLOT_SHOW = params['plot_show']
 PLOT_FOLDER = params['output_images_path']
@@ -73,9 +76,15 @@ TIMESTAMP = time_func.start_time()
 
 
 timestamp = time_func.start_time()
-train_dataset = Dataset.EddyDataset(root=DATA_PATH, mesh_path=MESH_PATH, split='train')
-val_dataset = Dataset.EddyDataset(root=DATA_PATH, mesh_path=MESH_PATH, split='val')
-test_dataset = Dataset.EddyDataset(root=DATA_PATH, mesh_path=MESH_PATH, split='test')
+
+train_dataset = Dataset.EddyDataset(root=DATA_PATH, mesh_path=MESH_PATH, split='train', proportions=TRAIN_VAL_TEST)
+
+val_dataset = Dataset.EddyDataset(root=DATA_PATH, mesh_path=MESH_PATH, split='val', proportions=TRAIN_VAL_TEST)
+#val_dataset.permutations = train_dataset.permutations
+
+test_dataset = Dataset.EddyDataset(root=DATA_PATH, mesh_path=MESH_PATH, split='test', proportions=TRAIN_VAL_TEST)
+#test_dataset.permutations = train_dataset.permutations
+
 time_func.stop_time(timestamp, "Datasets creation")
 
 
@@ -143,7 +152,7 @@ def train():
         pred = model(batch)
         print('train pred:', pred)
         loss = LOSS_OP(pred, batch.y)
-        print('train loss:', loss)
+        print('train loss:', loss, '\n')
 
         # If you try the Soft Dice Score, use this(even if the loss stays constant)
         #loss.requires_grad = True
@@ -171,7 +180,7 @@ def evaluate(loader):
         pred = model(batch)
         print('val pred:', pred)
         loss = LOSS_OP(pred, batch.y)
-        print('val loss:', loss)
+        print('val loss:', loss, '\n')
 
         total_loss += loss.item() * batch.num_graphs
     
@@ -187,7 +196,7 @@ timestamp = time_func.start_time()
 train_loss = []
 valid_loss = []
 
-for epoch in range(50):
+for epoch in range(EPOCHS):
     t_loss = train()
     v_loss = evaluate(val_loader)
     print(f'Epoch: {epoch+1:03d}, Train running loss: {t_loss:.4f}, Val running loss: {v_loss:.4f}')
@@ -208,7 +217,7 @@ plt.legend(title="Loss type: " + str(LOSS_OP))
 if PLOT_SHOW:
     plt.show()
 else:
-    plt.savefig(PLOT_FOLDER+"/train_val_losses_3.png")
+    plt.savefig(PLOT_FOLDER+"/train_val_losses_7.png")
     plt.close()
 
 
@@ -242,7 +251,7 @@ im2 = axes[1].scatter(mesh_lon, mesh_lat, c=this_pred, s=1)
 if PLOT_SHOW:
     plt.show()
 else:
-    plt.savefig(PLOT_FOLDER+"/pred_vs_ground_3.png")
+    plt.savefig(PLOT_FOLDER+"/pred_vs_ground_7.png")
     plt.close()
 
 
@@ -274,7 +283,7 @@ for batch in test_loader:
         if pred_values[i] == batch.y[i]:
             correct_pred += 1
 
-print(f"Correct predictions:\t{correct_pred}")
 print(f"Total background cells:\t{tot_background}")
+print(f"Correct predictions:\t{correct_pred}")
 print(f"Total predictions:\t{tot_pred}")
 print(f"Graph U-Net accuracy:\t{correct_pred/tot_pred:.4f}")

@@ -1,6 +1,7 @@
 import glob
 import numpy as np
 import os
+import random
 import torch
 import torch_geometric.utils as tg_utils
 from torch_geometric.data import Data
@@ -9,7 +10,7 @@ import xarray as xr
 
 class EddyDataset(Dataset):
     # root: Where the dataset should be stored and divided into processed/ and raw/
-    def __init__(self, root, mesh_path, split, transform=None, pre_transform=None, pre_filter=None):
+    def __init__(self, root, mesh_path, split, proportions, transform=None, pre_transform=None, pre_filter=None):
         
         self.mesh_path = mesh_path
         self.split = split
@@ -20,20 +21,22 @@ class EddyDataset(Dataset):
         # These are useless(TODO for now?)
         graph_names = self.processed_file_names
         if 'pre_filter.pt' in graph_names:
-            os.remove(self.processed_dir+'/pre_filter.pt')
+            os.remove(self.processed_dir + '/pre_filter.pt')
         if 'pre_transform.pt' in graph_names:
-            os.remove(self.processed_dir+'/pre_transform.pt')
+            os.remove(self.processed_dir + '/pre_transform.pt')
         
-        TRAIN_PROP, VAL_PROP, TEST_PROP = 70, 20, 10
+        TRAIN_PROP, VAL_PROP, TEST_PROP = proportions[0], proportions[1], proportions[2]
         total_n_files = len(self.processed_file_names)
-        self.n_train = 256#round(total_n_files*TRAIN_PROP/100)
-        self.n_val = 1#round(total_n_files*VAL_PROP/100)
-        self.n_test = 32#total_n_files-self.n_train-self.n_val
         
-        # We just need to do this once - TODO fix this, it only shuffles the train
+        self.n_train = round(total_n_files*TRAIN_PROP/100)
+        self.n_val = round(total_n_files*VAL_PROP/100)
+        self.n_test = total_n_files-self.n_train-self.n_val
+        
+        #self.permutations = [_ for _ in range(total_n_files)]
+        
+        # We just need to do this once
         if split == 'train':
-            #self = self.shuffle()
-            #print(self.shuffle(return_perm=True))
+            #self.permutations = random.sample(self.permutations, len(self.permutations))
             print("    Shape of node feature matrix:", np.shape(self[0].x))
             print("    Shape of graph connectivity in COO format:", np.shape(self[0].edge_index))
             print("    Shape of labels:", np.shape(self[0].y))
@@ -138,7 +141,7 @@ class EddyDataset(Dataset):
         data = torch.load(os.path.join(self.processed_dir, data))
         return data
 
-    # Gets files per year, month, and/or day
+    # Gets files per year, month, and/or day - TODO: NOT USED ANYWHERE
     def get_by_time(self, year=None, month=None, day=None):
         if year == None:
             year = '*'
