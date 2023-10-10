@@ -10,7 +10,7 @@ import xarray as xr
 
 class EddyDataset(Dataset):
     # root: Where the dataset should be stored and divided into processed/ and raw/
-    def __init__(self, root, mesh_path, split, proportions, transform=None, pre_transform=None, pre_filter=None):
+    def __init__(self, root, mesh_path, split, proportions, random_seed, transform=None, pre_transform=None, pre_filter=None):
         
         self.mesh_path = mesh_path
         self.split = split
@@ -32,11 +32,20 @@ class EddyDataset(Dataset):
         self.n_val = round(total_n_files*VAL_PROP/100)
         self.n_test = total_n_files-self.n_train-self.n_val
         
-        #self.permutations = [_ for _ in range(total_n_files)]
+        # The order is going to be the same for train, val and test due to the shared random_seed
+        self.permutations = [_ for _ in range(total_n_files)]
+        random.seed(random_seed)
+        random.shuffle(self.permutations)
         
-        # We just need to do this once
         if split == 'train':
-            #self.permutations = random.sample(self.permutations, len(self.permutations))
+            self.permutations = self.permutations[:self.n_train]
+        elif split == 'val':
+            self.permutations = self.permutations[self.n_train:(self.n_train+self.n_val)]
+        elif split == 'test':
+            self.permutations = self.permutations[(self.n_train+self.n_val):(self.n_train+self.n_val+self.n_test)]
+        
+        # Just print this once
+        if split == 'train':
             print("    Shape of node feature matrix:", np.shape(self[0].x))
             print("    Shape of graph connectivity in COO format:", np.shape(self[0].edge_index))
             print("    Shape of labels:", np.shape(self[0].y))
@@ -115,28 +124,11 @@ class EddyDataset(Dataset):
 
     # Returns the number of examples in the dataset
     def len(self):
-        res = -1
-        if self.split == 'train':
-            res = self.n_train
-        elif self.split == 'val':
-            res = self.n_val
-        elif self.split == 'test':
-            res = self.n_test
-        return res
+        return len(self.permutations)
 
     # Implements the logic to load a single graph
     def get(self, idx):
-        data = None
-        files = []
-        
-        if self.split == 'train':
-            files = self.processed_file_names[:self.n_train]
-        elif self.split == 'val':
-            files = self.processed_file_names[self.n_train:(self.n_train+self.n_val)]
-        elif self.split == 'test':
-            files = self.processed_file_names[(self.n_train+self.n_val):(self.n_train+self.n_val+self.n_test)]
-        
-        #print(f"Get({self.split}): {files[idx]}")
+        files = [self.processed_file_names[p] for p in self.permutations]
         data = files[idx]
         data = torch.load(os.path.join(self.processed_dir, data))
         return data

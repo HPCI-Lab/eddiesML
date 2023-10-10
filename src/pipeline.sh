@@ -1,12 +1,10 @@
 #!/bin/bash
-#SBATCH --job-name=pipe
-#SBATCH --output=pipeline.log
+#SBATCH --job-name=pipe_8
+#SBATCH --output=pipe_8_test.log
 
 #SBATCH --partition=shared        # Partition name
-#SBATCH --ntasks=1
-#SBATCH --cpus-per-task=32
 #SBATCH --mem=150G                 # Amount of memory needed
-#SBATCH --time=08:00:00
+#SBATCH --time=12:00:00
 #SBATCH --account=ab0995          # Charge resources on this project account
 
 #SBATCH --mail-type=end

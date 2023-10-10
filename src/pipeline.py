@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import random
 import sys
 import torch
 import torch_geometric
@@ -76,15 +77,14 @@ PLOT_VERTICAL = params['plot_vertical']
 TIMESTAMP = time_func.start_time()
 
 
+random_seed = random.randint(1, 10000)
+print(f"Random seed for train-val-test split: {random_seed}")
+
 timestamp = time_func.start_time()
 
-train_dataset = Dataset.EddyDataset(root=DATA_PATH, mesh_path=MESH_PATH, split='train', proportions=TRAIN_VAL_TEST)
-
-val_dataset = Dataset.EddyDataset(root=DATA_PATH, mesh_path=MESH_PATH, split='val', proportions=TRAIN_VAL_TEST)
-#val_dataset.permutations = train_dataset.permutations
-
-test_dataset = Dataset.EddyDataset(root=DATA_PATH, mesh_path=MESH_PATH, split='test', proportions=TRAIN_VAL_TEST)
-#test_dataset.permutations = train_dataset.permutations
+train_dataset = Dataset.EddyDataset(root=DATA_PATH, mesh_path=MESH_PATH, split='train', proportions=TRAIN_VAL_TEST, random_seed=random_seed)
+val_dataset = Dataset.EddyDataset(root=DATA_PATH, mesh_path=MESH_PATH, split='val', proportions=TRAIN_VAL_TEST, random_seed=random_seed)
+test_dataset = Dataset.EddyDataset(root=DATA_PATH, mesh_path=MESH_PATH, split='test', proportions=TRAIN_VAL_TEST, random_seed=random_seed)
 
 time_func.stop_time(timestamp, "Datasets creation")
 
@@ -200,7 +200,7 @@ valid_loss = []
 for epoch in range(EPOCHS):
     t_loss = train()
     v_loss = evaluate(val_loader)
-    print(f'Epoch: {epoch+1:03d}, Train running loss: {t_loss:.4f}, Val running loss: {v_loss:.4f}')
+    print(f'Epoch: {epoch+1:03d}, Train running loss: {t_loss:.4f}, Val running loss: {v_loss:.4f}\n')
     train_loss.append(t_loss)
     valid_loss.append(v_loss)
 

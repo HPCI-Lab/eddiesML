@@ -5,22 +5,22 @@ train_prop: 80
 val_prop: 10
 test_prop: 10
 
-train_batch_size: 292
+train_batch_size: 64
 val_batch_size: 36
 test_batch_size: 37
 
 n_features: 1
-hid_channels: 32
+hid_channels: 64
 n_classes: 3
 
 final_act: "softmax" # "sigmoid" "linear"
 loss_op: "WCE" # "CE"
-loss_weight_1: 0.0238
-loss_weight_2: 0.4734
-loss_weight_3: 0.5028
+loss_weight_1: 1.
+loss_weight_2: 9.
+loss_weight_3: 8.
 
 optimizer: "Adam"
-learn_rate: 0.005
+learn_rate: 0.001
 
 epochs: 70
 
