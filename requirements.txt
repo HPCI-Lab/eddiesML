@@ -1,7 +1,9 @@
+ipykernel
 matplotlib
 netcdf4
-numpy
+pyyaml
 sklearn
+tabulate
 torch
 torch-scatter
 torch-sparse
