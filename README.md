@@ -10,3 +10,9 @@ Python scripts for the processing of unstrutured FESOM2 grids for the identifica
    * First instance of the DL pipeline's main body
  * Dataset.py
    * PyTorch Dataset class to create the set of graphs that will compose train, validation and test sets
+
+## How to setup:
+  * conda create -n <env_name> python=3.11
+  * conda activate <env_name>
+  * pip install -r requirements.txt
+  * python -m ipykernel install --user --name <env_name> --display-name="<env_name>"
