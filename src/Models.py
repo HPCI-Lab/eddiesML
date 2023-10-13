@@ -67,4 +67,105 @@ class GCNModel(nn.Module):
         final = nn.Softmax()
         print(f"GCN instantiated!\n\tMiddle act: {middle}")#\n\tFinal act: {final}")
         
+# Graph UNet with batch normilization after each convulational layer
+# We use subclassing to add the batchnorma
+class GUNeteBatch(nn.Module):
+    def __init__(self, in_channels, out_channels, depth):
+        super(GUNetBatch, self).__init__()
+        self.depth = depth
         
+        # Create a list to hold the encoder layers
+        self.encoders = nn.ModuleList()
+        
+        # Create a list to hold the decoder layers
+        self.decoders = nn.ModuleList()
+        
+        # Create BatchNorm layers for each layer
+        self.batch_norms = nn.ModuleList()
+        
+        # Encoder (down-sampling)
+        for i in range(self.depth):
+            self.encoders.append(nn.Sequential(
+                GraphUNet(in_channels, out_channels, depth=1),
+                nn.BatchNorm1d(out_channels),  # BatchNorm after each encoder
+                nn.ReLU()
+            ))
+            in_channels = out_channels
+        
+        # Decoder (up-sampling)
+        for i in range(self.depth - 1):
+            self.decoders.append(nn.Sequential(
+                GraphUNet(in_channels * 2, out_channels, depth=1),
+                nn.BatchNorm1d(out_channels),  # BatchNorm after each decoder
+                nn.ReLU()
+            ))
+            in_channels = out_channels
+        
+        # Final decoder without the BatchNorm
+        self.decoders.append(nn.Sequential(
+            GraphUNet(in_channels * 2, out_channels, depth=1),
+            nn.ReLU()
+        ))
+    
+    def forward(self, data):
+        x, edge_index = data.x, data.edge_index
+        
+        xs = []
+        
+        # Encoder (down-sampling)
+        for i in range(self.depth):
+            x = self.encoders[i](x, edge_index)
+            xs.append(x)
+        
+        # Decoder (up-sampling)
+        for i in range(self.depth - 1, -1, -1):
+            x = self.decoders[i](x, torch.cat([x, xs[i]], dim=1), edge_index)
+        
+        return x
+    
+# Graph Unet with batch normilization
+class GraphUNetWithBN(nn.Module):
+    def __init__(self, in_channels, hidden_channels, out_channels, depth):
+        super(GraphUNetWithBN, self).__init__()
+        self.depth = depth
+
+        # Create a list to hold the encoder layers
+        self.encoders = nn.ModuleList()
+
+        # Create a list to hold the decoder layers
+        self.decoders = nn.ModuleList()
+
+        # Create BatchNorm layers for each layer
+        self.batch_norms = nn.ModuleList()
+
+        # Encoder (down-sampling)
+        for i in range(self.depth):
+            self.encoders.append(GraphUNet(in_channels, hidden_channels, out_channels, depth=1))
+            self.batch_norms.append(nn.BatchNorm1d(hidden_channels))  # BatchNorm after each encoder
+            in_channels = hidden_channels
+
+        # Decoder (up-sampling)
+        for i in range(self.depth - 1):
+            self.decoders.append(GraphUNet(in_channels * 2, hidden_channels, out_channels, depth=1))
+            self.batch_norms.append(nn.BatchNorm1d(hidden_channels))  # BatchNorm after each decoder
+            in_channels = hidden_channels
+
+        # Final decoder without the BatchNorm
+        self.decoders.append(GraphUNet(in_channels * 2, out_channels, out_channels, depth=1))
+
+    def forward(self, data):
+        x, edge_index = data.x, data.edge_index
+
+        xs = []
+
+        # Encoder (down-sampling)
+        for i in range(self.depth):
+            x = self.encoders[i](x, edge_index)
+            x = self.batch_norms[i](x)
+            xs.append(x)
+
+        # Decoder (up-sampling)
+        for i in range(self.depth - 1, -1, -1):
+            x = self.decoders[i](x, torch.cat([x, xs[i]], dim=1), edge_index)
+
+        return x

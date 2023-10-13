@@ -6,13 +6,13 @@ val_prop: 10
 test_prop: 10
 
 train_batch_size: 64
-val_batch_size: 36
-test_batch_size: 37
+val_batch_size: 32
+test_batch_size: 32
 
 n_features: 1
-hid_channels: 64
+hid_channels: 25
 n_classes: 3
-n_layers: 9
+n_layers: 13
 model: "GCN"
 
 final_act: "softmax" # "sigmoid" "linear"
@@ -27,9 +27,9 @@ learn_rate: 0.001
 epochs: 70
 
 # True: shows the graphical results. False: saves them in a folder
-plot_show: False
+plot_show: True
 
 plot_number: 8
 plot_vertical: True
 
-output_images_path: "/work/ab0995/b382484/eddy_data/subset_pre_proc/image_results"
+output_images_path: "/work/ab0995/b382484/eddy_data/subset_pre_proc/image_results/gcn"
