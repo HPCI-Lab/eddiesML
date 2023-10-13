@@ -5,9 +5,9 @@ train_prop: 80
 val_prop: 10
 test_prop: 10
 
-train_batch_size: 64
-val_batch_size: 36
-test_batch_size: 37
+train_batch_size: 32
+val_batch_size: 16
+test_batch_size: 16
 
 n_features: 1
 hid_channels: 64
@@ -22,12 +22,10 @@ loss_weight_3: 8.
 optimizer: "Adam"
 learn_rate: 0.001
 
-epochs: 70
+epochs: 50
 
 # True: shows the graphical results. False: saves them in a folder
 plot_show: False
-
-plot_number: 8
-plot_vertical: True
+plot_number: 1
 
 output_images_path: "/work/ab0995/b382485/eddy_data/subset_pre_proc/image_results"
