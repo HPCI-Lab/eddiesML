@@ -57,7 +57,7 @@ if params['loss_op'] == "CE":
     LOSS_OP = torch.nn.CrossEntropyLoss()
 elif params['loss_op'] == "WCE":
     class_weights = [params['loss_weight_1'], params['loss_weight_2'], params['loss_weight_3']]
-    LOSS_OP = Loss.WeightedCrossEntropyLoss(class_weights)
+    LOSS_OP = Loss.WeightedCrossEntropyLoss(class_weights, DEVICE)
 
 OPTIMIZER = None
 if params['optimizer'] == "Adam":
@@ -70,9 +70,6 @@ EPOCHS = params['epochs']
 PLOT_SHOW = params['plot_show']
 PLOT_FOLDER = params['output_images_path']
 PLOT_N = params['plot_number']
-
-# TODO use this
-PLOT_VERTICAL = params['plot_vertical']
 
 TIMESTAMP = time_func.start_time()
 
@@ -133,6 +130,7 @@ model = Model(
 print(model)
 
 
+dummy_graph.to(DEVICE)
 print(summary(model, dummy_graph))
 
 
@@ -151,9 +149,7 @@ def train():
 
         # forward + loss
         pred = model(batch)
-        print('train pred:', pred)
         loss = LOSS_OP(pred, batch.y)
-        print('train loss:', loss, '\n')
 
         # If you try the Soft Dice Score, use this(even if the loss stays constant)
         #loss.requires_grad = True
@@ -179,9 +175,7 @@ def evaluate(loader):
 
         # forward + loss
         pred = model(batch)
-        print('val pred:', pred)
         loss = LOSS_OP(pred, batch.y)
-        print('val loss:', loss, '\n')
 
         total_loss += loss.item() * batch.num_graphs
     
@@ -200,11 +194,11 @@ valid_loss = []
 for epoch in range(EPOCHS):
     t_loss = train()
     v_loss = evaluate(val_loader)
-    print(f'Epoch: {epoch+1:03d}, Train running loss: {t_loss:.4f}, Val running loss: {v_loss:.4f}\n')
+    print(f'Epoch: {epoch+1:03d}, Train running loss: {t_loss:.4f}, Val running loss: {v_loss:.4f}')
     train_loss.append(t_loss)
     valid_loss.append(v_loss)
 
-time_func.stop_time(timestamp, "Training Complete!\n")
+time_func.stop_time(timestamp, "Training Complete!")
 
 metric = evaluate(test_loader)
 print(f'Metric for test: {metric:.4f}')
@@ -213,7 +207,7 @@ print(f'Metric for test: {metric:.4f}')
 plt.figure(figsize=(8, 4))
 plt.plot(train_loss, label='Train loss')
 plt.plot(valid_loss, label='Validation loss')
-plt.legend(title="Loss type: " + str(LOSS_OP))
+plt.legend(title="Loss type: " + params['loss_op'])
 
 if PLOT_SHOW:
     plt.show()
@@ -235,6 +229,7 @@ mesh_lon = mesh.lon[mesh.nodes].values
 mesh_lat = mesh.lat[mesh.nodes].values
 
 
+batch.to('cpu')
 this_target = batch.y[:mesh.dims['nodes_subset']]
 this_pred = []
 for p in pred[:mesh.dims['nodes_subset']]:
@@ -255,6 +250,8 @@ else:
     plt.savefig(PLOT_FOLDER+"/pred_vs_ground_" + str(PLOT_N) + ".png")
     plt.close()
 
+
+timestamp = time_func.start_time()
 
 torch.no_grad()
 model.eval()
@@ -278,8 +275,9 @@ for batch in test_loader:
         if b==0:
             tot_background += 1
     
-    # Should always be equal
-    print(len(pred_values), "\n", len(batch.y))
+    if len(pred_values) != len(batch.y):
+        raise ValueError("Just to be extra sure, but you should never see this error appear.")
+    
     for i in range(len(batch.y)):
         if pred_values[i] == batch.y[i]:
             correct_pred += 1
@@ -288,3 +286,5 @@ print(f"Total background cells:\t{tot_background}")
 print(f"Correct predictions:\t{correct_pred}")
 print(f"Total predictions:\t{tot_pred}")
 print(f"Graph U-Net accuracy:\t{correct_pred/tot_pred:.4f}")
+
+time_func.stop_time(timestamp, "Accuracy calculated!\n")
