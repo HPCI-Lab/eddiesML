@@ -90,7 +90,7 @@ print(train_dataset.len(), val_dataset.len(), test_dataset.len())
 
 
 if (TRAIN_PROP+VAL_PROP+TEST_PROP) != 100:
-    raise ValueError(f"Sum of train-val-test proportions with value {TRAIN_PROP+VAL_PROP+TEST_PROP} is different from 1")
+    raise ValueError(f"Sum of train-val-test proportions with value {TRAIN_PROP+VAL_PROP+TEST_PROP} is different from 100")
 
 if FINAL_ACT == None:
     raise ValueError(f"Parameter 'final_act' is invalid with value {params['final_act']}")
@@ -216,12 +216,17 @@ else:
     plt.close()
 
 
-torch.no_grad()
+timestamp = time_func.start_time()
+DEVICE=torch.device('cpu')
+model = model.to(DEVICE)
+
+
 model.eval()
-batch = next(iter(test_loader))
-batch = batch.to(DEVICE)
-pred = model(batch)
-print(pred)
+with torch.no_grad():
+    batch = next(iter(test_loader))
+    batch = batch.to(DEVICE)
+    pred = model(batch)
+    print(pred)
 
 
 mesh = xr.open_dataset(MESH_PATH)
@@ -229,7 +234,6 @@ mesh_lon = mesh.lon[mesh.nodes].values
 mesh_lat = mesh.lat[mesh.nodes].values
 
 
-batch.to('cpu')
 this_target = batch.y[:mesh.dims['nodes_subset']]
 this_pred = []
 for p in pred[:mesh.dims['nodes_subset']]:
@@ -250,41 +254,36 @@ else:
     plt.savefig(PLOT_FOLDER+"/pred_vs_ground_" + str(PLOT_N) + ".png")
     plt.close()
 
+time_func.stop_time(timestamp, "pred_vs_ground plot created!")
+
+
+# Running it on cuda is a huge improvement
+DEVICE=torch.device('cuda')
+model = model.to(DEVICE)
 
 timestamp = time_func.start_time()
 
-torch.no_grad()
 model.eval()
-correct_pred = 0
-tot_pred = 0
-tot_background = 0
+with torch.no_grad():
+    tot_background = 0
+    correct_pred = 0
+    tot_pred = len(test_loader.dataset)*dummy_graph.num_nodes
 
-for batch in test_loader:
-    batch = batch.to(DEVICE)
-    pred = model(batch)
-    tot_pred += len(pred)
-    
-    pred_values = []
-    for p in pred:
-        p = p.tolist()
-        max_value = max(p)
-        max_index = p.index(max_value)
-        pred_values.append(max_index)
-    
-    for b in batch.y:
-        if b==0:
-            tot_background += 1
-    
-    if len(pred_values) != len(batch.y):
-        raise ValueError("Just to be extra sure, but you should never see this error appear.")
-    
-    for i in range(len(batch.y)):
-        if pred_values[i] == batch.y[i]:
-            correct_pred += 1
+    for batch in test_loader:
+        batch = batch.to(DEVICE)
 
-print(f"Total background cells:\t{tot_background}")
-print(f"Correct predictions:\t{correct_pred}")
-print(f"Total predictions:\t{tot_pred}")
-print(f"Graph U-Net accuracy:\t{correct_pred/tot_pred:.4f}")
+        pred = model(batch)
 
-time_func.stop_time(timestamp, "Accuracy calculated!\n")
+        _, indices = torch.max(pred, dim=1)
+
+        tot_background += (batch.y == 0).sum().item()
+
+        # This works because the values in the indices correspond to the values in batch.y
+        correct_pred += (indices == batch.y).sum().item()
+
+    print(f"Total background cells:\t{tot_background}")
+    print(f"Correct predictions:\t{correct_pred}")
+    print(f"Total predictions:\t{tot_pred}")
+    print(f"Graph U-Net accuracy:\t{correct_pred/tot_pred*100:.2f}%")
+
+time_func.stop_time(timestamp, "Accuracy calculated!")
