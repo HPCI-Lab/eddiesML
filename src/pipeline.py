@@ -31,6 +31,8 @@ params = yaml.safe_load(open(yaml_file))
 DATA_PATH = params['input_subset_pre_processed']
 MESH_PATH = params['input_subset_grid']
 
+DATASET_SIZE = params['dataset_size']
+
 TRAIN_PROP = params['train_prop']
 VAL_PROP = params['val_prop']
 TEST_PROP = params['test_prop']
@@ -79,9 +81,9 @@ print(f"Random seed for train-val-test split: {random_seed}")
 
 timestamp = time_func.start_time()
 
-train_dataset = Dataset.EddyDataset(root=DATA_PATH, mesh_path=MESH_PATH, split='train', proportions=TRAIN_VAL_TEST, random_seed=random_seed)
-val_dataset = Dataset.EddyDataset(root=DATA_PATH, mesh_path=MESH_PATH, split='val', proportions=TRAIN_VAL_TEST, random_seed=random_seed)
-test_dataset = Dataset.EddyDataset(root=DATA_PATH, mesh_path=MESH_PATH, split='test', proportions=TRAIN_VAL_TEST, random_seed=random_seed)
+train_dataset = Dataset.EddyDataset(root=DATA_PATH, mesh_path=MESH_PATH, dataset_size=DATASET_SIZE, split='train', proportions=TRAIN_VAL_TEST, random_seed=random_seed)
+val_dataset = Dataset.EddyDataset(root=DATA_PATH, mesh_path=MESH_PATH, dataset_size=DATASET_SIZE, split='val', proportions=TRAIN_VAL_TEST, random_seed=random_seed)
+test_dataset = Dataset.EddyDataset(root=DATA_PATH, mesh_path=MESH_PATH, dataset_size=DATASET_SIZE, split='test', proportions=TRAIN_VAL_TEST, random_seed=random_seed)
 
 time_func.stop_time(timestamp, "Datasets creation")
 
