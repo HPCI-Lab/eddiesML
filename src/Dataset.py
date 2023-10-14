@@ -46,6 +46,8 @@ class EddyDataset(Dataset):
         elif split == 'test':
             self.permutations = self.permutations[(self.n_train+self.n_val):(self.n_train+self.n_val+self.n_test)]
         
+        self.permutations = [self.processed_file_names[p] for p in self.permutations]
+        
         # Just print this once
         if split == 'train':
             print("    Shape of node feature matrix:", np.shape(self[0].x))
@@ -130,8 +132,7 @@ class EddyDataset(Dataset):
 
     # Implements the logic to load a single graph - TODO with a lot of data this slows the process quite a lot
     def get(self, idx):
-        files = [self.processed_file_names[p] for p in self.permutations]
-        data = files[idx]
+        data = self.permutations[idx]
         data = torch.load(os.path.join(self.processed_dir, data))
         return data
 
