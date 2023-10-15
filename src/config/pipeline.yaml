@@ -1,6 +1,8 @@
 input_subset_pre_processed: "/work/ab0995/b382485/eddy_data/subset_pre_proc"
 input_subset_grid: "/work/ab0995/b382485/eddy_data/subset_pre_proc/subset_mesh.nc"
 
+dataset_size: 365
+
 train_prop: 80
 val_prop: 10
 test_prop: 10
@@ -10,7 +12,13 @@ val_batch_size: 32
 test_batch_size: 32
 
 n_features: 1
+<<<<<<< HEAD
 hid_channels: 25
+||||||| df80ebd
+hid_channels: 64
+=======
+hid_channels: 32
+>>>>>>> origin/main
 n_classes: 3
 n_layers: 13
 model: "GCN"
@@ -24,12 +32,22 @@ loss_weight_3: 8.
 optimizer: "Adam"
 learn_rate: 0.001
 
-epochs: 70
+epochs: 50
 
 # True: shows the graphical results. False: saves them in a folder
+<<<<<<< HEAD
 plot_show: True
 
 plot_number: 8
 plot_vertical: True
+||||||| df80ebd
+plot_show: False
+
+plot_number: 8
+plot_vertical: True
+=======
+plot_show: True
+plot_number: 4
+>>>>>>> origin/main
 
 output_images_path: "/work/ab0995/b382484/eddy_data/subset_pre_proc/image_results/gcn"

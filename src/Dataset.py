@@ -10,7 +10,7 @@ import xarray as xr
 
 class EddyDataset(Dataset):
     # root: Where the dataset should be stored and divided into processed/ and raw/
-    def __init__(self, root, mesh_path, split, proportions, random_seed, transform=None, pre_transform=None, pre_filter=None):
+    def __init__(self, root, mesh_path, dataset_size, split, proportions, random_seed, transform=None, pre_transform=None, pre_filter=None):
         
         self.mesh_path = mesh_path
         self.split = split
@@ -18,7 +18,7 @@ class EddyDataset(Dataset):
         # Call of process() within
         super().__init__(root, transform, pre_transform, pre_filter)
         
-        # These are useless(TODO for now?)
+        # These are useless(TODO for now?)è
         graph_names = self.processed_file_names
         if 'pre_filter.pt' in graph_names:
             os.remove(self.processed_dir + '/pre_filter.pt')
@@ -26,14 +26,16 @@ class EddyDataset(Dataset):
             os.remove(self.processed_dir + '/pre_transform.pt')
         
         TRAIN_PROP, VAL_PROP, TEST_PROP = proportions[0], proportions[1], proportions[2]
-        total_n_files = len(self.processed_file_names)
         
-        self.n_train = round(total_n_files*TRAIN_PROP/100)
-        self.n_val = round(total_n_files*VAL_PROP/100)
-        self.n_test = total_n_files-self.n_train-self.n_val
+        if dataset_size > len(self.processed_file_names):
+            raise ValueError(f"Parameter 'dataset_size' with value {dataset_size} is bigger than the available samples, which are {len(self.processed_file_names)}")
+        
+        self.n_train = round(dataset_size*TRAIN_PROP/100)
+        self.n_val = round(dataset_size*VAL_PROP/100)
+        self.n_test = dataset_size-self.n_train-self.n_val
         
         # The order is going to be the same for train, val and test due to the shared random_seed
-        self.permutations = [_ for _ in range(total_n_files)]
+        self.permutations = [_ for _ in range(len(self.processed_file_names))]
         random.seed(random_seed)
         random.shuffle(self.permutations)
         
@@ -43,6 +45,8 @@ class EddyDataset(Dataset):
             self.permutations = self.permutations[self.n_train:(self.n_train+self.n_val)]
         elif split == 'test':
             self.permutations = self.permutations[(self.n_train+self.n_val):(self.n_train+self.n_val+self.n_test)]
+        
+        self.permutations = [self.processed_file_names[p] for p in self.permutations]
         
         # Just print this once
         if split == 'train':
@@ -126,10 +130,9 @@ class EddyDataset(Dataset):
     def len(self):
         return len(self.permutations)
 
-    # Implements the logic to load a single graph
+    # Implements the logic to load a single graph - TODO with a lot of data this slows the process quite a lot
     def get(self, idx):
-        files = [self.processed_file_names[p] for p in self.permutations]
-        data = files[idx]
+        data = self.permutations[idx]
         data = torch.load(os.path.join(self.processed_dir, data))
         return data
 

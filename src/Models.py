@@ -11,7 +11,6 @@ class GUNet(torch.nn.Module):
         super().__init__()
 
         self.act_middle = torch.nn.functional.relu
-        # F.log_softmax(x, dim=1)
         self.act_final = final_act
         
         pool_ratios = [2000 / num_nodes, 0.5]
