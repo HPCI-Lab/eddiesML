@@ -1,7 +1,7 @@
 input_subset_pre_processed: "/work/ab0995/b382485/eddy_data/subset_pre_proc"
 input_subset_grid: "/work/ab0995/b382485/eddy_data/subset_pre_proc/subset_mesh.nc"
 
-dataset_size: 1540
+dataset_size: 365
 
 train_prop: 75
 val_prop: 15
@@ -12,7 +12,7 @@ val_batch_size: 16
 test_batch_size: 16
 
 n_features: 1
-hid_channels: 64
+hid_channels: 32
 n_classes: 3
 n_layers: 32
 model_used: "SAGE"
