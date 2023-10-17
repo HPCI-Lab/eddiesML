@@ -12,6 +12,7 @@ import yaml
 
 import Dataset
 import Models
+import SAGE
 import Loss
 from utils import time_func
 
@@ -45,6 +46,7 @@ TEST_BATCH_SIZE = params['test_batch_size']
 N_FEATURES = params['n_features']
 HID_CHANNELS = params['hid_channels']
 N_CLASSES = params['n_classes']
+N_LAYERS = params['n_layers']
 
 FINAL_ACT = None
 if params['final_act'] == "sigmoid":
@@ -60,6 +62,8 @@ if params['loss_op'] == "CE":
 elif params['loss_op'] == "WCE":
     class_weights = [params['loss_weight_1'], params['loss_weight_2'], params['loss_weight_3']]
     LOSS_OP = Loss.WeightedCrossEntropyLoss(class_weights, DEVICE)
+elif params['loss_op'] == "Dice":
+    LOSS_OP = Loss.SoftDiceLossMultiClass()
 
 OPTIMIZER = None
 if params['optimizer'] == "Adam":
@@ -119,14 +123,15 @@ test_loader = DataLoader(test_dataset, batch_size=TEST_BATCH_SIZE, shuffle=False
 print(len(train_loader.dataset), len(val_loader.dataset), len(test_loader.dataset))
 
 
-Model = Models.GUNet
+Model = SAGE.GraphSAGEModel
 
 model = Model(
-    in_channels = N_FEATURES,
-    hidden_channels = HID_CHANNELS,
-    out_channels = N_CLASSES,
-    num_nodes = dummy_graph.num_nodes,   # TODO can put these in Dataset.py
-    final_act = FINAL_ACT
+    num_features = N_FEATURES,
+    hidden_dim = HID_CHANNELS,
+    num_classes = N_CLASSES,
+    num_layers = N_LAYERS
+    #num_nodes = dummy_graph.num_nodes   # TODO can put these in Dataset.py
+    #final_act = FINAL_ACT
 ).to(DEVICE)
 
 print(model)

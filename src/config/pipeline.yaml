@@ -1,53 +1,36 @@
 input_subset_pre_processed: "/work/ab0995/b382485/eddy_data/subset_pre_proc"
 input_subset_grid: "/work/ab0995/b382485/eddy_data/subset_pre_proc/subset_mesh.nc"
 
-dataset_size: 365
+dataset_size: 1540
 
-train_prop: 80
-val_prop: 10
+train_prop: 75
+val_prop: 15
 test_prop: 10
 
-train_batch_size: 64
-val_batch_size: 32
-test_batch_size: 32
+train_batch_size: 16
+val_batch_size: 16
+test_batch_size: 16
 
 n_features: 1
-<<<<<<< HEAD
-hid_channels: 25
-||||||| df80ebd
 hid_channels: 64
-=======
-hid_channels: 32
->>>>>>> origin/main
 n_classes: 3
-n_layers: 13
-model: "GCN"
+n_layers: 32
+model_used: "SAGE"
 
 final_act: "softmax" # "sigmoid" "linear"
-loss_op: "WCE" # "CE"
-loss_weight_1: 1.
-loss_weight_2: 9.
-loss_weight_3: 8.
+loss_op: "Dice" # "CE"
+loss_weight_1: 0.0238
+loss_weight_2: 0.5028
+loss_weight_3: 0.4734
 
 optimizer: "Adam"
 learn_rate: 0.001
 
-epochs: 50
+epochs: 90
 
 # True: shows the graphical results. False: saves them in a folder
-<<<<<<< HEAD
 plot_show: True
-
-plot_number: 8
 plot_vertical: True
-||||||| df80ebd
-plot_show: False
-
-plot_number: 8
-plot_vertical: True
-=======
-plot_show: True
 plot_number: 4
->>>>>>> origin/main
 
-output_images_path: "/work/ab0995/b382484/eddy_data/subset_pre_proc/image_results/gcn"
+output_images_path: "/work/ab0995/b382484/eddy_data/subset_pre_proc/image_results"

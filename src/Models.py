@@ -3,8 +3,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.nn import GCNConv
 from torch_geometric.nn import GraphUNet
+from torch_geometric.nn import SAGEConv
 from torch_geometric.utils import dropout_edge
-      
+
+
 # Graph U-Net class
 class GUNet(torch.nn.Module):
     def __init__(self, in_channels, hidden_channels, out_channels, num_nodes, final_act):
@@ -23,7 +25,6 @@ class GUNet(torch.nn.Module):
         edge_index, _ = dropout_edge(data.edge_index, p=0.2,
                                      force_undirected=True,
                                      training=self.training)
-        
         x = F.dropout(data.x, p=0.92, training=self.training)
         x = self.unet(x, edge_index)
 
@@ -38,6 +39,7 @@ class GUNet(torch.nn.Module):
         middle = self.act_middle.__name__
         final = self.act_final.__name__
         print(f"GUNet instantiated!\n\tMiddle act: {middle}\n\tFinal act: {final}")
+    
 # A GCN model created for comparison purposes with the Graph U-Net model
 class GCNModel(nn.Module):
     def __init__(self, in_channels, hidden_channels, out_channels, num_nodes, num_layers):
@@ -66,105 +68,50 @@ class GCNModel(nn.Module):
         final = nn.Softmax()
         print(f"GCN instantiated!\n\tMiddle act: {middle}")#\n\tFinal act: {final}")
         
-# Graph UNet with batch normilization after each convulational layer
-# We use subclassing to add the batchnorma
-class GUNeteBatch(nn.Module):
-    def __init__(self, in_channels, out_channels, depth):
-        super(GUNetBatch, self).__init__()
-        self.depth = depth
-        
-        # Create a list to hold the encoder layers
-        self.encoders = nn.ModuleList()
-        
-        # Create a list to hold the decoder layers
-        self.decoders = nn.ModuleList()
-        
-        # Create BatchNorm layers for each layer
-        self.batch_norms = nn.ModuleList()
-        
-        # Encoder (down-sampling)
-        for i in range(self.depth):
-            self.encoders.append(nn.Sequential(
-                GraphUNet(in_channels, out_channels, depth=1),
-                nn.BatchNorm1d(out_channels),  # BatchNorm after each encoder
-                nn.ReLU()
-            ))
-            in_channels = out_channels
-        
-        # Decoder (up-sampling)
-        for i in range(self.depth - 1):
-            self.decoders.append(nn.Sequential(
-                GraphUNet(in_channels * 2, out_channels, depth=1),
-                nn.BatchNorm1d(out_channels),  # BatchNorm after each decoder
-                nn.ReLU()
-            ))
-            in_channels = out_channels
-        
-        # Final decoder without the BatchNorm
-        self.decoders.append(nn.Sequential(
-            GraphUNet(in_channels * 2, out_channels, depth=1),
-            nn.ReLU()
-        ))
-    
-    def forward(self, data):
-        x, edge_index = data.x, data.edge_index
-        
-        xs = []
-        
-        # Encoder (down-sampling)
-        for i in range(self.depth):
-            x = self.encoders[i](x, edge_index)
-            xs.append(x)
-        
-        # Decoder (up-sampling)
-        for i in range(self.depth - 1, -1, -1):
-            x = self.decoders[i](x, torch.cat([x, xs[i]], dim=1), edge_index)
-        
-        return x
-    
-# Graph Unet with batch normilization
-class GraphUNetWithBN(nn.Module):
-    def __init__(self, in_channels, hidden_channels, out_channels, depth):
-        super(GraphUNetWithBN, self).__init__()
-        self.depth = depth
+# Define the GraphSAGE model class
+class GraphSAGEModel(nn.Module):
+    def __init__(self, num_features, hidden_dim, num_classes, num_layers, normalize=True):
+        super(GraphSAGEModel, self).__init__()
 
-        # Create a list to hold the encoder layers
-        self.encoders = nn.ModuleList()
+        self.num_layers = num_layers
 
-        # Create a list to hold the decoder layers
-        self.decoders = nn.ModuleList()
+        # List to store the GraphSAGE convolutional layers
+        self.conv_layers = nn.ModuleList()
 
-        # Create BatchNorm layers for each layer
-        self.batch_norms = nn.ModuleList()
+        # Input layer
+        self.conv_layers.append(SAGEConv(num_features, hidden_dim))
 
-        # Encoder (down-sampling)
-        for i in range(self.depth):
-            self.encoders.append(GraphUNet(in_channels, hidden_channels, out_channels, depth=1))
-            self.batch_norms.append(nn.BatchNorm1d(hidden_channels))  # BatchNorm after each encoder
-            in_channels = hidden_channels
+        # Apply He initialization to the underlying linear transformations
+        for i in range(len(self.conv_layers)):
+            nn.init.kaiming_uniform_(self.conv_layers[i].lin_l.weight)
+            nn.init.kaiming_uniform_(self.conv_layers[i].lin_r.weight)
 
-        # Decoder (up-sampling)
-        for i in range(self.depth - 1):
-            self.decoders.append(GraphUNet(in_channels * 2, hidden_channels, out_channels, depth=1))
-            self.batch_norms.append(nn.BatchNorm1d(hidden_channels))  # BatchNorm after each decoder
-            in_channels = hidden_channels
+        # Intermediate layers
+        for _ in range(1, num_layers - 1):
+            self.conv_layers.append(SAGEConv(hidden_dim, hidden_dim))
 
-        # Final decoder without the BatchNorm
-        self.decoders.append(GraphUNet(in_channels * 2, out_channels, out_channels, depth=1))
+        # Output layer
+        self.conv_layers.append(SAGEConv(hidden_dim, num_classes))
+
+        self.normalize = normalize
 
     def forward(self, data):
         x, edge_index = data.x, data.edge_index
 
-        xs = []
+        for i in range(self.num_layers):
+            x = self.conv_layers[i](x, edge_index)
 
-        # Encoder (down-sampling)
-        for i in range(self.depth):
-            x = self.encoders[i](x, edge_index)
-            x = self.batch_norms[i](x)
-            xs.append(x)
+            if i < self.num_layers - 1:
+                x = F.relu(x)
 
-        # Decoder (up-sampling)
-        for i in range(self.depth - 1, -1, -1):
-            x = self.decoders[i](x, torch.cat([x, xs[i]], dim=1), edge_index)
+        if self.normalize:
+            x = F.normalize(x, p=2, dim=-1)  # L2 normalization
 
-        return x
+        return F.log_softmax(x, dim=1)
+    
+    ## Possible improvements points
+    # Number of layer might significantly impact its performance
+    # Different hidden dims (e.g., 64, 128, 256)
+    # Include or exclude L2 normalization - try
+    # Number of Aggregation Neighbors (num_samples) - accuracy vs performance
+    #Batch size, epoch, optimizer loss
