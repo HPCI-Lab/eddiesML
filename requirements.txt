@@ -2,7 +2,7 @@ ipykernel
 matplotlib
 netcdf4
 pyyaml
-sklearn
+scikit-learn
 tabulate
 torch
 torch-scatter
