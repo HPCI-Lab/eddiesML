@@ -98,7 +98,8 @@ if FINAL_ACT == None:
     raise ValueError(f"Parameter 'final_act' is invalid with value {params['final_act']}")
 
 if LOSS_OP == None:
-    raise ValueError(f"Parameter 'loss_op' is invalid with value {params['loss_op']}")
+    if params['loss_op'] != "Dice":
+        raise ValueError(f"Parameter 'loss_op' is invalid with value {params['loss_op']}")
 
 if OPTIMIZER == None:
     raise ValueError(f"Parameter 'optimizer' is invalid with value {params['optimizer']}")
@@ -137,6 +138,37 @@ print(summary(model, dummy_graph))
 
 
 OPTIMIZER = OPTIMIZER(model.parameters(), lr=LEARN_RATE)
+
+
+if params['loss_op'] == "Dice":
+    
+    timestamp = time_func.start_time()
+
+    tot_counts = [0, 0, 0]
+    for batch in train_loader:
+        batch = batch.to(DEVICE)
+        
+        unique, counts = torch.unique(batch.y, return_counts=True)
+        
+        # TODO - I don't really like this, it just informs me whether something is wrong and then does it anyway
+        if 0 not in unique:
+            print("Error: class 0 not present in batch")
+        elif 1 not in unique:
+            print("Error: class 1 not present in batch")
+        elif 2 not in unique:
+            print("Error: class 2 not present in batch")
+        else:
+            for class_idx in unique:
+                tot_counts[class_idx] += counts[class_idx].item()
+
+    time_func.stop_time(timestamp, "Unique counted!")
+    
+    freq = [c/np.sum(tot_counts) for c in tot_counts]
+    freq_inv = [1/f for f in freq]
+    class_weights = [f/np.sum(freq_inv) for f in freq_inv]
+    print(freq_inv, "- freq_inv")
+    print(class_weights, "- class_weights")
+    LOSS_OP = Loss.SoftDiceLoss(class_weights)
 
 
 def train():
@@ -228,7 +260,6 @@ with torch.no_grad():
     batch = next(iter(test_loader))
     batch = batch.to(DEVICE)
     pred = model(batch)
-    print(pred)
 
 
 mesh = xr.open_dataset(MESH_PATH)
@@ -237,12 +268,7 @@ mesh_lat = mesh.lat[mesh.nodes].values
 
 
 this_target = batch.y[:mesh.dims['nodes_subset']]
-this_pred = []
-for p in pred[:mesh.dims['nodes_subset']]:
-    p = p.tolist()
-    max_value = max(p)
-    max_index = p.index(max_value)
-    this_pred.append(max_index)
+_, this_pred = torch.max(pred[:mesh.dims['nodes_subset']], dim=1)
 
 
 fig, axes = plt.subplots(2, 1, figsize=(12, 12))
