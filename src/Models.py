@@ -70,7 +70,7 @@ class GCNModel(nn.Module):
         
 # Define the GraphSAGE model class
 class GraphSAGEModel(nn.Module):
-    def __init__(self, num_features, hidden_dim, num_classes, num_layers, normalize=True):
+    def __init__(self, num_features, hidden_dim, num_classes, num_layers, normalize=True, dropout=0.0):
         super(GraphSAGEModel, self).__init__()
 
         self.num_layers = num_layers
@@ -105,7 +105,8 @@ class GraphSAGEModel(nn.Module):
                 x = F.relu(x)
 
         if self.normalize:
-            x = F.normalize(x, p=2, dim=-1)  # L2 normalization
+            #x = F.normalize(x, p=2, dim=-1)  # L2 normalization
+            x = x / (x.abs().sum(dim=1, keepdim=True) + 1e-8)
 
         return F.log_softmax(x, dim=1)
     

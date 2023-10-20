@@ -10,7 +10,7 @@
 
 #SBATCH --mail-type=end
 #SBATCH --mail-type=fail
-#SBATCH --mail-user=massimiliano.fronza@unitn.it
+#SBATCH --mail-user=desta.gebremedhin@unitn.it
 
 source ~/.bashrc
 conda activate eddy-tracking-new
