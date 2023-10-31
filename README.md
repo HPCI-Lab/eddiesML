@@ -2,31 +2,12 @@
 
 ### Description
 
-The eddiesGNN repository contains the modules of a deep learning pipeline that can pre-process and train a Graph Neural Network on FESOM2 unstructured meshes.
+This repository contains the modules of a deep learning pipeline to pre-process FESOM2 data and train a Graph Neural Network on said unstructured meshes.
 The network can then be used to detect oceanic mesoscale eddies directly on the unstructured grid, without the need for prior interpolation to regular matrices.
-
-### Requirements
-
-In order to run this deep learning pipeline, make sure you have the following packages(all available via Pip or Conda) properly installed:
-
-1. ipykernel
-2. matplotlib
-3. netcdf4
-4. pyyaml
-5. scikit-learn
-6. tabulate
-7. torch
-8. torch-scatter
-9. torch-sparse
-10. torch-geometric
-11. xarray
-
-**Note**:
-The libraries above are defined also in the requirements.txt file.
 
 ### How to Setup
 
-For this process, you need an installation of Anaconda. Having a recent enough version of Python is essential for using features like the GPU computation.
+For this process, it's preferable to have an installation of Anaconda/Miniconda. Having a recent enough version of Python is essential for using features like the GPU computation.
 
 ```
 $ conda create -n env_eddiesGNN python=3.11
@@ -40,14 +21,29 @@ If you want to also create the link between your environment and your JupyterHub
 $ python -m ipykernel install --user --name env_eddiesGNN --display-name="<env_name>"
 ```
 
-### List of Components
+### Components of this Repository
 
- * pre_processing.ipynb
-   * Creation of subset mesh and interpolation of SSH and seg_mask to unstructured space
- * pre_processing_demo.ipynb
-   * Graphical demonstration notebook for the pre-processing
- * pipeline_demo.ipynb
-   * First instance of the DL pipeline's main body
- * Dataset.py
-   * PyTorch Dataset class to create the set of graphs that will compose train, validation and test sets
+##### pre_processing.ipynb
 
+Creates the subset unstructured mesh (if not already existing) from the global one.<br>
+Interpolates the SSH and its segmentation mask from the regular matrix space to the unstructured subset mesh, using the K-Nearest Neighbors algorithm.<br>
+Applies some corrections in the data before writing the final output.<br>
+Requires a JupyterHub server to be run.
+
+##### pre_processing_demo.ipynb
+
+Demonstrates the pre-processing phase by repeating the same steps of pre_processing.ipynb, but with more explanations, plots, and without writing the final results on the file system.<br>
+Requires a JupyterHub server to be run.
+
+##### pipeline.py
+
+The core body of the training/testing phase. It uses the PyTorch Geometric framework and the code in Dataset.py, Loss.py, and Model.py.<br>
+Creates the graph dataset, splits it into train-validation-test, tests the hyperparameters, creates the DataLoaders, instantiates the Graph U-Net, the Optimizer, the Dice Loss, performs the actual training, and outputs some comparison plots.<br>
+Requires a Slurm execution script to be scheduled.<br>
+GPU support is native with the code.
+
+##### pipeline_demo.ipynb
+
+Performs the training/testing phase in a notebook by repeating the same steps of pipeline.py, but with more explanations.<br>
+Requires a JupyterHub server to be run.<br>
+GPU support is native with the code.
