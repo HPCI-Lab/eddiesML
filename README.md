@@ -47,3 +47,7 @@ GPU support is native with the code.
 Performs the training/testing phase in a notebook by repeating the same steps of pipeline.py, but with more explanations.<br>
 Requires a JupyterHub server to be run.<br>
 GPU support is native with the code.
+
+##### config/
+
+Folder with the configuration (.yaml) files containing the hyperparameters for both the pre-processing and the pipeline steps.
