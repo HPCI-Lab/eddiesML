@@ -39,7 +39,7 @@ Requires a JupyterHub server to be run.
 
 The core body of the training/testing phase. It uses the PyTorch Geometric framework and the code in Dataset.py, Loss.py, and Model.py.<br>
 Creates the graph dataset, splits it into train-validation-test, tests the hyperparameters, creates the DataLoaders, instantiates the Graph U-Net, the Optimizer, the Dice Loss, performs the actual training, and outputs some comparison plots.<br>
-Requires a Slurm execution script to be scheduled.<br>
+Requires a Slurm execution script to be scheduled, like pipeline.sh.<br>
 GPU support is native with the code.
 
 ##### pipeline_demo.ipynb
