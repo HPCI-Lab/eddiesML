@@ -3,7 +3,9 @@ import torch.nn.functional as F
 from torch_geometric.nn import GCNConv
 from torch_geometric.nn import GraphUNet
 from torch_geometric.utils import dropout_edge
-      
+
+import customGraphUNet
+
 # Graph U-Net class
 class GUNet(torch.nn.Module):
     def __init__(self, in_channels, hidden_channels, out_channels, num_nodes, final_act):
@@ -12,9 +14,10 @@ class GUNet(torch.nn.Module):
         self.act_middle = torch.nn.functional.relu
         self.act_final = final_act
         
-        pool_ratios = [2000 / num_nodes, 0.5]
-        self.unet = GraphUNet(in_channels, hidden_channels, out_channels,
-                              depth=3, pool_ratios=pool_ratios, act=self.act_middle)
+        K = 1
+        pool_ratios = [K / num_nodes]#, 0.5]
+        self.unet = GraphUNet(in_channels, hidden_channels, out_channels, depth=3, pool_ratios=pool_ratios, act=self.act_middle)
+                #customGraphUNet.GraphUNet
         
         self._log_network()
         
