@@ -1,7 +1,12 @@
-input_subset_pre_processed: "/work/ab0995/b382485/eddy_data/reduced_roi/pre_proc_train"
-input_subset_grid: "/work/ab0995/b382485/eddy_data/reduced_roi/pre_proc_train/subset_mesh.nc"
+#input_subset_pre_processed: "/work/ab0995/b382485/eddy_data/reduced_roi/pre_proc_train"
+#input_subset_grid: "/work/ab0995/b382485/eddy_data/reduced_roi/pre_proc_train/subset_mesh.nc"
+#output_images_path: "/work/ab0995/b382485/eddy_data/reduced_roi/pre_proc_train/image_results"
 
-dataset_size: 2000
+input_subset_pre_processed: "/work/ab0995/b382485/eddy_data/original_roi/pre_proc_train"
+input_subset_grid: "/work/ab0995/b382485/eddy_data/original_roi/pre_proc_train/subset_mesh.nc"
+output_images_path: "/work/ab0995/b382485/eddy_data/original_roi/pre_proc_train/image_results"
+
+dataset_size: 4017
 
 train_prop: 80
 val_prop: 10
@@ -24,10 +29,8 @@ loss_weight_3: 8
 optimizer: "Adam"
 learn_rate: 0.001
 
-epochs: 50
+epochs: 20
 
 # True: shows the graphical results. False: saves them in a folder
-plot_show: False
+plot_show: True
 plot_number: 7
-
-output_images_path: "/work/ab0995/b382485/eddy_data/reduced_roi/pre_proc_train/image_results"

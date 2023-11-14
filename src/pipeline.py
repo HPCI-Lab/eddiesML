@@ -152,11 +152,11 @@ if params['loss_op'] == "Dice":
         
         # TODO - I don't really like this, it just informs me whether something is wrong and then does it anyway
         if 0 not in unique:
-            print("Error: class 0 not present in batch")
+            raise ValueError("Error: class 0 not present in batch")
         elif 1 not in unique:
-            print("Error: class 1 not present in batch")
+            raise ValueError("Error: class 1 not present in batch")
         elif 2 not in unique:
-            print("Error: class 2 not present in batch")
+            raise ValueError("Error: class 2 not present in batch")
         else:
             for class_idx in unique:
                 tot_counts[class_idx] += counts[class_idx].item()
@@ -184,10 +184,6 @@ def train():
         # forward + loss
         pred = model(batch)
         loss = LOSS_OP(pred, batch.y)
-
-        # If you try the Soft Dice Score, use this(even if the loss stays constant)
-        #loss.requires_grad = True
-        #loss = torch.tensor(loss.item(), requires_grad=True)
 
         total_loss += loss.item() * batch.num_graphs
         

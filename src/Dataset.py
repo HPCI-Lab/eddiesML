@@ -18,7 +18,7 @@ class EddyDataset(Dataset):
         # Call of process() within
         super().__init__(root, transform, pre_transform, pre_filter)
         
-        # These are useless(TODO for now?)è
+        # These are useless(TODO for now?)
         graph_names = self.processed_file_names
         if 'pre_filter.pt' in graph_names:
             os.remove(self.processed_dir + '/pre_filter.pt')
