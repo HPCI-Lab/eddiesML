@@ -13,6 +13,6 @@
 #SBATCH --mail-user=desta.gebremedhin@unitn.it
 
 source ~/.bashrc
-conda activate eddy-tracking-new
+conda activate eddy-tracking
 
-python3 ~/eddiesGNN/src/pipeline.py ~/eddiesGNN/src/config/pipeline.yaml
+python3 ~/eddiesGNN/src/pipeline_gat.py ~/eddiesGNN/src/config/pipeline.yaml

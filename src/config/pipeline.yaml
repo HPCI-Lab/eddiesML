@@ -1,32 +1,35 @@
-input_subset_pre_processed: "/work/ab0995/b382485/eddy_data/subset_pre_proc"
-input_subset_grid: "/work/ab0995/b382485/eddy_data/subset_pre_proc/subset_mesh.nc"
+# input_subset_pre_processed: "/work/ab0995/b382485/eddy_data/reduced_roi/pre_proc_train"
+# input_subset_grid: "/work/ab0995/b382485/eddy_data/reduced_roi/pre_proc_train/subset_mesh.nc"
+# New paths for graphs with normilized ssh values
+input_subset_pre_processed: "/work/ab0995/b382484/eddy_data/subset_pre_proc"
+input_subset_grid: "/work/ab0995/b382484/eddy_data/subset_pre_proc/subset_mesh.nc"
 
-dataset_size: 400
+dataset_size: 365
 
-train_prop: 75
-val_prop: 15
+train_prop: 80
+val_prop: 10
 test_prop: 10
 
-train_batch_size: 16
-val_batch_size: 16
-test_batch_size: 16
+train_batch_size: 32
+val_batch_size: 32
+test_batch_size: 32
 
 n_features: 1
-hid_channels: 32
+hid_channels: 64
 n_classes: 3
-n_layers: 32
-model_used: "SAGE"
+n_layers: 9
 
 final_act: "softmax" # "sigmoid" "linear"
-loss_op: "Dice" # "CE"
-loss_weight_1: 0.0238
-loss_weight_2: 0.5028
-loss_weight_3: 0.4734
+#Use "Dice" - for Dice loss, "WCE" - for weighted cross entropy, "Focal" - for Focal loss, "Tversky" - for Tversky loss, "TD" - for Tversky dice combined loss. To use unweighted losses, set all the weights to 1
+loss_op: "Tversky" # "Dice"
+loss_weight_1: 0.1
+loss_weight_2: 0.5
+loss_weight_3: 0.4
 
 optimizer: "Adam"
-learn_rate: 0.001
+learn_rate: 0.0005
 
-epochs: 90
+epochs: 55
 
 # True: shows the graphical results. False: saves them in a folder
 plot_show: True

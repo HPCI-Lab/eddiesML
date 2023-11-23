@@ -12,7 +12,6 @@ import yaml
 
 import Dataset
 import Models
-import SAGE
 import Loss
 from utils import time_func
 
@@ -46,7 +45,6 @@ TEST_BATCH_SIZE = params['test_batch_size']
 N_FEATURES = params['n_features']
 HID_CHANNELS = params['hid_channels']
 N_CLASSES = params['n_classes']
-N_LAYERS = params['n_layers']
 
 FINAL_ACT = None
 if params['final_act'] == "sigmoid":
@@ -62,8 +60,6 @@ if params['loss_op'] == "CE":
 elif params['loss_op'] == "WCE":
     class_weights = [params['loss_weight_1'], params['loss_weight_2'], params['loss_weight_3']]
     LOSS_OP = Loss.WeightedCrossEntropyLoss(class_weights, DEVICE)
-elif params['loss_op'] == "Dice":
-    LOSS_OP = Loss.SoftDiceLossMultiClass()
 
 OPTIMIZER = None
 if params['optimizer'] == "Adam":
@@ -102,7 +98,8 @@ if FINAL_ACT == None:
     raise ValueError(f"Parameter 'final_act' is invalid with value {params['final_act']}")
 
 if LOSS_OP == None:
-    raise ValueError(f"Parameter 'loss_op' is invalid with value {params['loss_op']}")
+    if params['loss_op'] != "Dice":
+        raise ValueError(f"Parameter 'loss_op' is invalid with value {params['loss_op']}")
 
 if OPTIMIZER == None:
     raise ValueError(f"Parameter 'optimizer' is invalid with value {params['optimizer']}")
@@ -123,15 +120,14 @@ test_loader = DataLoader(test_dataset, batch_size=TEST_BATCH_SIZE, shuffle=False
 print(len(train_loader.dataset), len(val_loader.dataset), len(test_loader.dataset))
 
 
-Model = SAGE.GraphSAGEModel
+Model = Models.GUNet
 
 model = Model(
-    num_features = N_FEATURES,
-    hidden_dim = HID_CHANNELS,
-    num_classes = N_CLASSES,
-    num_layers = N_LAYERS
-    #num_nodes = dummy_graph.num_nodes   # TODO can put these in Dataset.py
-    #final_act = FINAL_ACT
+    in_channels = N_FEATURES,
+    hidden_channels = HID_CHANNELS,
+    out_channels = N_CLASSES,
+    num_nodes = dummy_graph.num_nodes,   # TODO can put these in Dataset.py
+    final_act = FINAL_ACT
 ).to(DEVICE)
 
 print(model)
@@ -142,6 +138,37 @@ print(summary(model, dummy_graph))
 
 
 OPTIMIZER = OPTIMIZER(model.parameters(), lr=LEARN_RATE)
+
+
+if params['loss_op'] == "Dice":
+    
+    timestamp = time_func.start_time()
+
+    tot_counts = [0, 0, 0]
+    for batch in train_loader:
+        batch = batch.to(DEVICE)
+        
+        unique, counts = torch.unique(batch.y, return_counts=True)
+        
+        # TODO - I don't really like this, it just informs me whether something is wrong and then does it anyway
+        if 0 not in unique:
+            raise ValueError("Error: class 0 not present in batch")
+        elif 1 not in unique:
+            raise ValueError("Error: class 1 not present in batch")
+        elif 2 not in unique:
+            raise ValueError("Error: class 2 not present in batch")
+        else:
+            for class_idx in unique:
+                tot_counts[class_idx] += counts[class_idx].item()
+
+    time_func.stop_time(timestamp, "Unique counted!")
+    
+    freq = [c/np.sum(tot_counts) for c in tot_counts]
+    freq_inv = [1/f for f in freq]
+    class_weights = [f/np.sum(freq_inv) for f in freq_inv]
+    print(freq_inv, "- freq_inv")
+    print(class_weights, "- class_weights")
+    LOSS_OP = Loss.SoftDiceLoss(class_weights)
 
 
 def train():
@@ -157,10 +184,6 @@ def train():
         # forward + loss
         pred = model(batch)
         loss = LOSS_OP(pred, batch.y)
-
-        # If you try the Soft Dice Score, use this(even if the loss stays constant)
-        #loss.requires_grad = True
-        #loss = torch.tensor(loss.item(), requires_grad=True)
 
         total_loss += loss.item() * batch.num_graphs
         
@@ -233,7 +256,6 @@ with torch.no_grad():
     batch = next(iter(test_loader))
     batch = batch.to(DEVICE)
     pred = model(batch)
-    print(pred)
 
 
 mesh = xr.open_dataset(MESH_PATH)
@@ -242,12 +264,7 @@ mesh_lat = mesh.lat[mesh.nodes].values
 
 
 this_target = batch.y[:mesh.dims['nodes_subset']]
-this_pred = []
-for p in pred[:mesh.dims['nodes_subset']]:
-    p = p.tolist()
-    max_value = max(p)
-    max_index = p.index(max_value)
-    this_pred.append(max_index)
+_, this_pred = torch.max(pred[:mesh.dims['nodes_subset']], dim=1)
 
 
 fig, axes = plt.subplots(2, 1, figsize=(12, 12))

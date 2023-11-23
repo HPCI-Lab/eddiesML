@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 import torch.nn as nn
+import torch.nn.functional as F
 
 class WeightedCrossEntropyLoss(nn.Module):
     def __init__(self, class_weights):
@@ -70,3 +71,84 @@ class FocalLoss(nn.Module):
             return focal_loss
         else:
             raise ValueError("Invalid reduction option. Use 'mean', 'sum', or 'none'.")
+
+    
+#Weighted Tversky loss
+class TverskyLoss(nn.Module):
+    def __init__(self, alpha=0.3, beta=0.7, smooth=1.0, class_weights=None):
+        super(TverskyLoss, self).__init__()
+        self.alpha = alpha
+        self.beta = beta
+        self.smooth = smooth
+        self.class_weights = class_weights
+
+    def forward(self, y_pred, y_true):
+        assert y_pred.size(0) == y_true.size(0), "Batch size mismatch between y_pred and y_true"
+
+        y_pred = torch.sigmoid(y_pred)
+
+        # Initialize losses for each class
+        tversky_losses = torch.zeros(3, dtype=y_pred.dtype, device=y_pred.device)
+
+        for class_idx in range(3):
+            class_probs = y_pred[:, class_idx]
+            class_labels = (y_true == class_idx).float()
+
+            # Apply class weights
+            if self.class_weights is not None:
+                class_weights = self.class_weights[class_idx]
+                class_probs = class_probs * class_weights
+                class_labels = class_labels * class_weights
+
+            # Tversky loss
+            intersection = (class_probs * class_labels).sum()
+            tversky = (intersection + self.smooth) / ((class_probs + class_labels).sum() - intersection + self.smooth)
+            tversky_losses[class_idx] = 1 - tversky
+
+        # Average Tversky losses across classes
+        loss = tversky_losses.mean()
+
+        return loss
+# Loss - combination of dice loss and tversky loss to address class imbalance and multi scale nature of eddies
+
+class TverskyDiceLoss(nn.Module):
+    def __init__(self, alpha=0.3, beta=0.7, smooth=1.0, class_weights=None):
+        super(TverskyDiceLoss, self).__init__()
+        self.alpha = alpha
+        self.beta = beta
+        self.smooth = smooth
+        self.class_weights = class_weights
+
+    def forward(self, y_pred, y_true):
+        assert y_pred.size(0) == y_true.size(0), "Batch size mismatch between y_pred and y_true"
+
+        y_pred = torch.sigmoid(y_pred)
+
+        # Initialize losses for each class
+        tversky_losses = torch.zeros(3, dtype=y_pred.dtype, device=y_pred.device)
+        dice_losses = torch.zeros(3, dtype=y_pred.dtype, device=y_pred.device)
+
+        for class_idx in range(3):
+            class_probs = y_pred[:, class_idx]
+            class_labels = (y_true == class_idx).float()
+
+            # Apply class weights
+            if self.class_weights is not None:
+                class_weights = self.class_weights[class_idx]
+                class_probs = class_probs * class_weights
+                class_labels = class_labels * class_weights
+
+            # Tversky loss
+            intersection = (class_probs * class_labels).sum()
+            tversky = (intersection + self.smooth) / ((class_probs + class_labels).sum() - intersection + self.smooth)
+            tversky_losses[class_idx] = 1 - tversky
+
+            # Dice loss
+            dice_loss = 1 - (2 * intersection + self.smooth) / (class_probs.sum() + class_labels.sum() + self.smooth)
+            dice_losses[class_idx] = dice_loss
+
+        # Combine Tversky and Dice losses
+        combined_loss = tversky_losses.mean() + dice_losses.mean()
+
+        return combined_loss
+    

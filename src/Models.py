@@ -4,6 +4,8 @@ import torch.nn.functional as F
 from torch_geometric.nn import GCNConv
 from torch_geometric.nn import GraphUNet
 from torch_geometric.nn import SAGEConv
+from torch_geometric.nn import MessagePassing
+from torch_scatter import scatter_add
 from torch_geometric.utils import dropout_edge
 import Loss
 
@@ -56,6 +58,7 @@ class GCNModel(nn.Module):
 
         # Input layer
         self.conv_layers.append(GCNConv(num_features, hidden_dim, pool_ratios=pool_ratios, act=self.act_middle))
+        #nn.init.kaiming_uniform_(self.conv_layers.weight, mode='fan_in', nonlinearity='relu')
 
         # Apply He initialization to the underlying linear transformations
         # for i in range(len(self.conv_layers)):
@@ -109,6 +112,7 @@ class GraphSAGEModel(nn.Module):
 
         # Input layer
         self.conv_layers.append(SAGEConv(num_features, hidden_dim, pool_ratios=pool_ratios, act=self.act_middle))
+        #nn.init.kaiming_uniform_(self.conv_layers.weight, mode='fan_in', nonlinearity='relu')
 
         # Apply He initialization to the underlying linear transformations
         # for i in range(len(self.conv_layers)):
@@ -153,73 +157,68 @@ class GraphSAGEModel(nn.Module):
     # Include or exclude L2 normalization - try
     # Number of Aggregation Neighbors (num_samples) - accuracy vs performance
     #Batch size, epoch, optimizer loss
-    
-# Definition of an Ensemble class to combine predictions of the three models
-class EnsembleModel(nn.Module):
-    def __init__(self, GUNet, GCNModel, GraphSAGEModel, weights=None):
-        super(EnsembleModel, self).__init__()
-        self.GUNet = GUNet
-        self.GCNModel = GCNModel
-        self.GraphSAGEModel = GraphSAGEModel
 
-        # Define weights for each model in the ensemble
-        if weights is None:
-            self.weights = nn.Parameter(torch.ones(3))  # Default: equal weights
+    
+# Graph attention model design    
+class GraphAttentionLayer(nn.Module):
+    def __init__(self, in_features, out_features, dropout, alpha, concat=True):
+        super(GraphAttentionLayer, self).__init__()
+        self.in_features = in_features
+        self.out_features = out_features
+        self.dropout = dropout
+        self.alpha = alpha
+        self.concat = concat
+
+        self.W = nn.Parameter(torch.zeros(size=(in_features, out_features)))
+        nn.init.xavier_uniform_(self.W.data, gain=1.414)
+        self.a = nn.Parameter(torch.zeros(size=(2*out_features, 1)))
+        nn.init.xavier_uniform_(self.a.data, gain=1.414)
+
+        self.leakyrelu = nn.LeakyReLU(self.alpha)
+
+    def forward(self, x, edge_index):
+        edge_index, _ = dropout_edge(edge_index, p=self.dropout, force_undirected=True, training=self.training)
+        x = F.dropout(x, p=0.92, training=self.training)
+        h = torch.matmul(x, self.W)
+        N = h.size()[0]
+
+        row, col = edge_index
+        a_input = torch.cat([h[row], h[col]], dim=1)
+        e = self.leakyrelu(torch.matmul(a_input, self.a).squeeze(1))
+
+        # Normalize attention scores
+        edge_weights = F.softmax(e, dim=0)
+
+        # Aggregate neighborhood features using the normalized attention scores
+        # h_prime = scatter_add(edge_weights * h[col], row, dim=0, dim_size=N)
+        h_prime = scatter_add(edge_weights.view(-1, 1) * h[col], row, dim=0, dim_size=N)
+
+        if self.concat:
+            return F.elu(h_prime)
         else:
-            self.weights = nn.Parameter(torch.Tensor(weights))
-    def forward(self, data):
-        x, edge_index = data.x, data.edge_index
-        # Apply the Graph U-Net to the feature vectors
-        x_unet = self.GUNet(data)
-        # Apply the GCN to the graph and feature vectors
-        x_gcn = self.GCNModel(data)
-        # Apply the GraphSAGE to the graph and feature vectors
-        x_sage = self.GraphSAGEModel(data)
-        x = (self.weights[0] * x_unet + self.weights[1] * x_gcn + self.weights[2] * x_sage) / sum(self.weights)
-        return x
+            return h_prime
+
+class GAT(nn.Module):
+    def __init__(self, n_features, n_classes, n_hidden, n_layers, dropout, alpha):
+        super(GAT, self).__init__()
+        self.layers = nn.ModuleList()
         
-#Implementation of voting ensemble
-class VotingEnsemble(nn.Module):
-    def __init__(self, models):
-        super(VotingEnsemble, self).__init__()
-        self.models = nn.ModuleList(models)
+        # Input layer
+        self.layers.append(GraphAttentionLayer(n_features, n_hidden, dropout, alpha))
+        #nn.init.kaiming_uniform_(self.conv_layers.weight, mode='fan_in', nonlinearity='relu')
+
+        # Hidden layers
+        for _ in range(n_layers - 1):
+            self.layers.append(GraphAttentionLayer(n_hidden, n_hidden, dropout, alpha))
+
+        # Output layer
+        self.layers.append(GraphAttentionLayer(n_hidden, n_classes, dropout, alpha, concat=False))
 
     def forward(self, data):
-        predictions = [model(data) for model in self.models]
-        # Soft voting: Combine predictions using element-wise averaging
-        ensemble_output = torch.stack(predictions, dim=0).mean(dim=0)
-        return ensemble_output
-    
-# Focal loss fusion ensemble. 
-#Apply focal loss to each model's predictions before fusion to down-weights the background class  and up-weight cyclonic and anticyclonic eddies classes to counter the imbalanced datasets.
-class EnsembleFocal(nn.Module):
-    def __init__(self, GUNet, GCNModel, GraphSAGEModel, weights=None, focal_loss_params=None):
-        super(EnsembleFocal, self).__init__()
-        self.GUNet = GUNet
-        self.GCNModel = GCNModel
-        self.GraphSAGEModel = GraphSAGEModel
-
-        if weights is None:
-            self.weights = nn.Parameter(torch.ones(3))
-        else:
-            self.weights = nn.Parameter(torch.Tensor(weights))
-
-        # Focal loss parameters
-        self.focal_loss_params = focal_loss_params
-        self.focal_loss = Loss.FocalLoss(**focal_loss_params) if focal_loss_params else None
-
-    def forward(self, data):
-        x_unet = self.GUNet(data)
-        x_gcn = self.GCNModel(data)
-        x_sage = self.GraphSAGEModel(data)
-
-        # Combine model outputs with weights
-        combined_output = (self.weights[0] * x_unet + self.weights[1] * x_gcn + self.weights[2] * x_sage) / sum(self.weights)
-
-        # Apply focal loss if specified
-        if self.focal_loss:
-            target = data.y  # Assuming the ground truth labels are stored in data.y
-            loss = self.focal_loss(combined_output, target)
-            return combined_output, loss
-        else:
-            return combined_output
+        edge_index, _ = dropout_edge(data.edge_index, p=0.2,
+                                     force_undirected=True,
+                                     training=self.training)
+        x = F.dropout(data.x, p=0.92, training=self.training)
+        for layer in self.layers:
+            x = layer(x, edge_index)
+        return F.log_softmax(x, dim=1)
