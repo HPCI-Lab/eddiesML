@@ -3,14 +3,13 @@ year: 2012
 input_grid_nc: "/work/ab0995/a270088/meshes/FORCA12/fesom.mesh.diag.nc"
 output_mesh: "subset_mesh.nc"
 
-#input_path_ssh_seg_masks: "/work/ab0995/b382485/eddy_data/reduced_roi/segmentation_masks"
+#input_path_ssh_seg_masks: "/work/ab0995/b382485/eddy_data/reduced_roi/segmentation_masks/"
 #output_subset_pre_proc: "/work/ab0995/b382485/eddy_data/reduced_roi/pre_proc_train/"
-#output_subset_pre_proc_raw: "/work/ab0995/b382485/eddy_data/reduced_roi/pre_proc_train/raw"
+#output_subset_pre_proc_raw: "/work/ab0995/b382485/eddy_data/reduced_roi/pre_proc_train/raw/"
 
-input_path_ssh_seg_masks: "/work/ab0995/b382485/eddy_data/original_roi/segmentation_masks"
+input_path_ssh_seg_masks: "/work/ab0995/b382485/eddy_data/original_roi/segmentation_masks/"
 output_subset_pre_proc: "/work/ab0995/b382485/eddy_data/original_roi/pre_proc_train/"
-output_subset_pre_proc_raw: "/work/ab0995/b382485/eddy_data/original_roi/pre_proc_train/raw"
-
+output_subset_pre_proc_raw: "/work/ab0995/b382485/eddy_data/original_roi/pre_proc_train/raw/"
 
 input_left: -70
 input_right: 30

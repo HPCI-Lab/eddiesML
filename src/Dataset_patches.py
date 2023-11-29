@@ -48,7 +48,7 @@ class EddyDataset(Dataset):
         
         self.permutations = [self.processed_file_names[p] for p in self.permutations]
         
-        # Just print this once
+        # Just print this once - TODO if I have 8 patches with different topologies, this output will not be as correct
         if split == 'train':
             print("    Shape of node feature matrix:", np.shape(self[0].x))
             print("    Shape of graph connectivity in COO format:", np.shape(self[0].edge_index))
@@ -68,8 +68,10 @@ class EddyDataset(Dataset):
     # This function is triggered as soon as the PilotDataset is instantiated
     def process(self):
         
-        # Get the adjacency info(common for all the graphs)
-        edge_index = self._get_adjacency_info()
+        # Get the adjacency info(one per patch region)
+        edge_indexes = []
+        for i in range(8):
+            edge_indexes.append(self._get_adjacency_info('subset_mesh_' + str(i+1) + '.nc'))
         
         node_feats = None
         labels = None
@@ -78,9 +80,10 @@ class EddyDataset(Dataset):
             file_name = raw_path.split('/')[-1]
             year = file_name.split('_')[1]
             month = file_name.split('_')[2]
-            day = file_name.split('_')[3].split('.')[0]
+            day = file_name.split('_')[3]
+            patch = file_name.split('_')[4].split('.')[0]
             
-            #print(f'    Year {year}, Month {month}, Day {day}...')
+            #print(f'    Year {year}, Month {month}, Day {day}, Patch {patch}...')
             
             raw_data = xr.open_dataset(raw_path)
 
@@ -92,12 +95,12 @@ class EddyDataset(Dataset):
 
             # Create the Data object
             data = Data(
-                x=node_feats,                       # node features
-                edge_index=edge_index,              # edge connectivity
-                y=labels,                           # labels for classification
+                x=node_feats,                            # node features
+                edge_index=edge_indexes[int(patch)-1],   # edge connectivity
+                y=labels,                                # labels for classification
             )
 
-            torch.save(data, os.path.join(self.processed_dir, f'year_{year}_month_{month}_day_{day}.pt'))
+            torch.save(data, os.path.join(self.processed_dir, f'year_{year}_month_{month}_day_{day}_patch_{patch}.pt'))
 
 
     # Return the SSH information with shape=[num_nodes, num_node_features]
@@ -110,8 +113,8 @@ class EddyDataset(Dataset):
         return torch.tensor(all_nodes_feats, dtype=torch.float)
 
     # Return the graph edges in COO format with shape=[2, num_edges]
-    def _get_adjacency_info(self):
-        mesh = xr.open_dataset(self.mesh_path)
+    def _get_adjacency_info(self, patch_mesh):
+        mesh = xr.open_dataset(self.mesh_path + patch_mesh)
         edges_coo = torch.tensor(mesh.edges_local.values, dtype=torch.long)
         edges_coo = tg_utils.to_undirected(edges_coo)
         return edges_coo
