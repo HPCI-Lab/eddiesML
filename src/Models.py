@@ -14,8 +14,14 @@ class GUNet(torch.nn.Module):
         self.act_middle = torch.nn.functional.relu
         self.act_final = final_act
         
+        # Max pooling
         K = 1
-        pool_ratios = [K / num_nodes]#, 0.5]
+        pool_ratios = [K / num_nodes]
+        
+        # Top-K pooling
+        #K = 2000
+        #pool_ratios = [K / num_nodes, 0.5]
+        
         self.unet = GraphUNet(in_channels, hidden_channels, out_channels, depth=3, pool_ratios=pool_ratios, act=self.act_middle)
                 #customGraphUNet.GraphUNet
         
