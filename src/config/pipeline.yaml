@@ -6,15 +6,18 @@ input_subset_pre_processed: "/work/ab0995/b382485/eddy_data/original_roi/pre_pro
 input_subset_grid: "/work/ab0995/b382485/eddy_data/original_roi/pre_proc_train/subset_mesh.nc"
 output_images_path: "/work/ab0995/b382485/eddy_data/original_roi/pre_proc_train/image_results"
 
-dataset_size: 4017
+dataset_size: 1000
+
+random_seed: 3150
+use_seed: True
 
 train_prop: 80
 val_prop: 10
 test_prop: 10
 
-train_batch_size: 16
-val_batch_size: 16
-test_batch_size: 16
+train_batch_size: 4
+val_batch_size: 4
+test_batch_size: 4
 
 n_features: 1
 hid_channels: 16
@@ -27,9 +30,9 @@ loss_weight_2: 9
 loss_weight_3: 8
 
 optimizer: "Adam"
-learn_rate: 0.001
+learn_rate: 0.002
 
-epochs: 20
+epochs: 50
 
 # True: shows the graphical results. False: saves them in a folder
 plot_show: True
