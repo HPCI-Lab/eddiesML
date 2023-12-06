@@ -52,6 +52,7 @@ class EddyDataset(Dataset):
         if split == 'train':
             print("    Shape of node feature matrix:", np.shape(self[0].x))
             print("    Shape of graph connectivity in COO format:", np.shape(self[0].edge_index))
+            print("    Shape of edge weights:", np.shape(self[0].edge_attr))
             print("    Shape of labels:", np.shape(self[0].y))
     
     @property
@@ -70,6 +71,9 @@ class EddyDataset(Dataset):
         
         # Get the adjacency info(common for all the graphs)
         edge_index = self._get_adjacency_info()
+        
+        # Get the edge features(common for all the graphs)
+        edge_attr = self._get_edge_features(edge_index)
         
         node_feats = None
         labels = None
@@ -92,14 +96,61 @@ class EddyDataset(Dataset):
 
             # Create the Data object
             data = Data(
-                x=node_feats,                       # node features
-                edge_index=edge_index,              # edge connectivity
-                y=labels,                           # labels for classification
+                x=node_feats,                  # node features
+                edge_index=edge_index,         # edge connectivity
+                #edge_attr=edge_attr,           # edge attributes
+                y=labels,                      # labels for classification
             )
 
             torch.save(data, os.path.join(self.processed_dir, f'year_{year}_month_{month}_day_{day}.pt'))
 
+    
+    # Return the Haversine distance between 2 geographic points
+    def _haversine_dist(self, lon1, lat1, lon2, lat2):
+        # Radius of the Earth in meters
+        R = 6371000
 
+        # Convert lon and lat from degrees to radians
+        lon1, lat1, lon2, lat2 = np.radians([lon1, lat1, lon2, lat2])
+
+        # Haversine formula
+        dlon = lon2-lon1
+        dlat = lat2-lat1
+        a = np.sin(dlat/2.0)**2 + np.cos(lat1)*np.cos(lat2) * np.sin(dlon/2.0)**2
+        c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1-a))
+
+        dist = R*c
+        return dist
+
+    # Return the edges lengths in meters with shape=[num_edges, num_edge_features]
+    def _get_edge_features(self, edge_index):
+        all_edges_feats = []
+        distances = []
+        
+        mesh = xr.open_dataset(self.mesh_path)
+        edge_index = np.array(edge_index)
+
+        lon = mesh.lon.values
+        lat = mesh.lat.values
+        nodes = mesh.nodes.values
+
+        edges_lon = lon[nodes[edge_index]]
+        edges_lat = lat[nodes[edge_index]]
+        
+        for i in range(np.shape(edges_lon)[1]):
+            lon1 = edges_lon[0, i]
+            lat1 = edges_lat[0, i]
+            lon2 = edges_lon[1, i]
+            lat2 = edges_lat[1, i]
+            dist = self._haversine_dist(lon1, lat1, lon2, lat2)
+            distances.append(dist)
+        
+        all_edges_feats.append(distances)
+        all_edges_feats = np.asarray(all_edges_feats)
+        all_edges_feats = all_edges_feats.T
+        
+        return torch.tensor(all_edges_feats, dtype=torch.float)
+    
     # Return the SSH information with shape=[num_nodes, num_node_features]
     def _get_node_features(self, data):
         all_nodes_feats = []
