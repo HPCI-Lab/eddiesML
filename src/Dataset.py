@@ -104,7 +104,18 @@ class EddyDataset(Dataset):
     def _get_node_features(self, data):
         all_nodes_feats = []
         nodes_feats = data.ssh.values
+        
+        model_lat = data.model_lat.values
+
+        # grad_x = data.grad_x.values
+        # grad_y = data.grad_y.values
+
         all_nodes_feats.append(nodes_feats)
+        
+        all_nodes_feats.append(model_lat)
+        # all_nodes_feats.append(grad_x)
+        # all_nodes_feats.append(grad_y)
+        
         all_nodes_feats = np.asarray(all_nodes_feats)
         all_nodes_feats = all_nodes_feats.T
         return torch.tensor(all_nodes_feats, dtype=torch.float)
