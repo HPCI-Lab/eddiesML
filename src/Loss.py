@@ -36,6 +36,36 @@ class SoftDiceLoss(nn.Module):
         loss = 1.0 - weighted_mean
         return loss
 
+# PINN Loss
+class PINNLoss(nn.Module):
+    def __init__(self, gradient_x, gradient_y, class_weights, smooth=1):
+        super(PINNLoss, self).__init__()
+
+        self.class_weights = class_weights
+        self.gradient_x = gradient_x
+        self.gradient_y = gradient_y
+        self.smooth = smooth
+
+    def forward(self, logits, labels):
+        num_classes = logits.size(1)
+        dice_scores = torch.zeros(num_classes, dtype=logits.dtype, device=logits.device)
+
+        for class_idx in range(num_classes):
+            class_probs = logits[:, class_idx]
+            class_labels = (labels == class_idx).float()
+
+            intersection = (class_probs * class_labels).sum()
+            union = class_probs.sum() + class_labels.sum()
+
+            dice_scores[class_idx] = (2.0 * intersection + self.smooth) / (union + self.smooth)
+        
+        weighted_mean = (self.class_weights[0]*dice_scores[0] + self.class_weights[1]*dice_scores[1] + self.class_weights[2]*dice_scores[2])
+        dice_loss = 1.0 - weighted_mean
+        
+        # Calculate the vorticity constraint loss
+        vorticity_constraint_loss = torch.mean(self.gradient_x[0]**2 + self.gradient_y[0]**2)
+        loss = dice_loss + vorticity_constraint_loss
+        return loss
 # Focal loss
 class FocalLoss(nn.Module):
     def __init__(self, gamma=2, alpha=None, class_weights=[0.0238, 0.5028, 0.4734], reduction='mean'):
@@ -109,6 +139,8 @@ class TverskyLoss(nn.Module):
         loss = tversky_losses.mean()
 
         return loss
+    
+
 # Loss - combination of dice loss and tversky loss to address class imbalance and multi scale nature of eddies
 
 class TverskyDiceLoss(nn.Module):
@@ -151,4 +183,3 @@ class TverskyDiceLoss(nn.Module):
         combined_loss = tversky_losses.mean() + dice_losses.mean()
 
         return combined_loss
-    

@@ -222,3 +222,21 @@ class GAT(nn.Module):
         for layer in self.layers:
             x = layer(x, edge_index)
         return F.log_softmax(x, dim=1)
+    
+class VorticityConstraintLoss(nn.Module):
+    def __init__(self):
+        super(VorticityConstraintLoss, self).__init__()
+
+    def forward(self, data):
+        # Calculate spatial gradients using SSH gradients
+        x = F.dropout(x, p=0.92, training=self.training)
+        d_vorticity_dx = x[1]
+        d_vorticity_dy = x[2]
+
+        # Calculate the vorticity constraint loss
+        vorticity_constraint_loss = torch.mean(d_vorticity_dx**2 + d_vorticity_dy**2)
+
+        # Multiply the loss by the predicted eddy probabilities to apply the constraint only where eddies are predicted
+        #weighted_vorticity_constraint_loss = torch.mean(predicted_eddies * vorticity_constraint_loss)
+
+        return vorticity_constraint_loss
