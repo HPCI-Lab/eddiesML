@@ -14,6 +14,7 @@ class EddyDataset(Dataset):
         
         self.mesh_path = mesh_path
         self.split = split
+        self.scaler_feats = None
         
         # Call of process() within
         super().__init__(root, transform, pre_transform, pre_filter)
@@ -180,11 +181,15 @@ class EddyDataset(Dataset):
     def len(self):
         return len(self.permutations)
 
-    # Implements the logic to load a single graph - TODO with a lot of data this slows the process quite a lot
+    # Loads a single graph, scaled if a scaler is present
     def get(self, idx):
         data = self.permutations[idx]
         data = torch.load(os.path.join(self.processed_dir, data))
-        return data
+        if self.scaler_feats == None:
+            return data
+        else:
+            data.x = torch.tensor(self.scaler_feats.transform(data.x), dtype=torch.float)
+            return data
 
     # Gets files per year, month, and/or day - TODO: NOT USED ANYWHERE
     def get_by_time(self, year=None, month=None, day=None):
