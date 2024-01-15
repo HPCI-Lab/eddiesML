@@ -1,3 +1,4 @@
+dask
 ipykernel
 matplotlib
 netcdf4
