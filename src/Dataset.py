@@ -155,8 +155,12 @@ class EddyDataset(Dataset):
     # Return the SSH information with shape=[num_nodes, num_node_features]
     def _get_node_features(self, data):
         all_nodes_feats = []
-        nodes_feats = data.ssh.values
-        all_nodes_feats.append(nodes_feats)
+
+        # Append all available variables except for the label information
+        for key in data.data_vars:
+            if key != 'seg_mask':
+                all_nodes_feats.append(data.data_vars[key].values)
+
         all_nodes_feats = np.asarray(all_nodes_feats)
         all_nodes_feats = all_nodes_feats.T
         return torch.tensor(all_nodes_feats, dtype=torch.float)
@@ -185,11 +189,9 @@ class EddyDataset(Dataset):
     def get(self, idx):
         data = self.permutations[idx]
         data = torch.load(os.path.join(self.processed_dir, data))
-        if self.scaler_feats == None:
-            return data
-        else:
+        if self.scaler_feats != None:
             data.x = torch.tensor(self.scaler_feats.transform(data.x), dtype=torch.float)
-            return data
+        return data
 
     # Gets files per year, month, and/or day - TODO: NOT USED ANYWHERE
     def get_by_time(self, year=None, month=None, day=None):

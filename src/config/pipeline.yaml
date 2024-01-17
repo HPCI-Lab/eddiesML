@@ -2,25 +2,29 @@
 #input_subset_grid: "/work/ab0995/b382485/eddy_data/reduced_roi/pre_proc_train/subset_mesh.nc"
 #output_images_path: "/work/ab0995/b382485/eddy_data/reduced_roi/pre_proc_train/image_results"
 
-input_subset_pre_processed: "/work/ab0995/b382485/eddy_data/original_roi/pre_proc_train"
-input_subset_grid: "/work/ab0995/b382485/eddy_data/original_roi/pre_proc_train/subset_mesh.nc"
-output_images_path: "/work/ab0995/b382485/eddy_data/original_roi/pre_proc_train/image_results"
+#input_subset_pre_processed: "/work/ab0995/b382485/eddy_data/original_roi/pre_proc_train"
+#input_subset_grid: "/work/ab0995/b382485/eddy_data/original_roi/pre_proc_train/subset_mesh.nc"
+#output_images_path: "/work/ab0995/b382485/eddy_data/original_roi/pre_proc_train/image_results"
 
-dataset_size: 1000
+input_subset_pre_processed: "/work/ab0995/b382485/eddy_data/original_roi_new_vars/pre_proc_train"
+input_subset_grid: "/work/ab0995/b382485/eddy_data/original_roi_new_vars/pre_proc_train/subset_mesh.nc"
+output_images_path: "/work/ab0995/b382485/eddy_data/original_roi_new_vars/pre_proc_train/image_results"
 
-random_seed: 3150
-use_seed: True
+dataset_size: 731
+
+random_seed: 2946
+use_seed: False
 
 train_prop: 80
 val_prop: 10
 test_prop: 10
 
-train_batch_size: 4
-val_batch_size: 4
-test_batch_size: 4
+train_batch_size: 1
+val_batch_size: 1
+test_batch_size: 1
 
-n_features: 1
-hid_channels: 16
+n_features: 3
+hid_channels: 32
 n_classes: 3
 
 final_act: "softmax" # "sigmoid" "linear"
@@ -30,7 +34,7 @@ loss_weight_2: 9
 loss_weight_3: 8
 
 optimizer: "Adam"
-learn_rate: 0.002
+learn_rate: 0.005
 
 epochs: 50
 
