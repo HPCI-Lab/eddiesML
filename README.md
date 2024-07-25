@@ -1,4 +1,4 @@
-# eddiesGNN
+# eddiesML
 
 ### Description
 
